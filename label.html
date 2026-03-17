@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Label System — Label Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#EFF6FF', 100:'#DBEAFE', 200:'#BFDBFE', 500:'#3B82F6', 600:'#2563EB', 700:'#1D4ED8', 800:'#1E40AF', 900:'#1E3A8A' },
+                        amber: { 50:'#FFFBEB', 100:'#FEF3C7', 400:'#FBBF24', 500:'#F59E0B', 600:'#D97706' },
+                    },
+                    fontFamily: { sans: ['Fira Sans', 'Noto Sans Thai', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Fira Sans', 'Noto Sans Thai', sans-serif; }
+        .label-btn { transition: all 0.12s ease; }
+        .label-btn:hover { transform: scale(1.03); }
+        .label-btn.selected { ring: 2px; box-shadow: 0 0 0 2px #1E40AF; }
+        .color-swatch { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+        .color-swatch:hover { transform: scale(1.15); }
+        .color-swatch.selected { box-shadow: 0 0 0 3px #1E40AF; transform: scale(1.15); }
+        .kbd { @apply inline-flex items-center justify-center min-w-[20px] h-5 px-1 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500; }
+        .thumbnail-strip img { transition: opacity 0.15s ease; }
+        .thumbnail-strip img:hover { opacity: 0.8; }
+        .thumbnail-strip img.active { box-shadow: 0 0 0 2px #3B82F6; opacity: 1; }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex flex-col">
+
+    <!-- Top Bar -->
+    <header class="bg-slate-800 border-b border-slate-700 h-12 flex items-center px-4 shrink-0">
+        <div class="flex items-center gap-3 flex-1">
+            <a href="list.html" class="text-slate-400 hover:text-white cursor-pointer transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div class="w-px h-5 bg-slate-700"></div>
+            <span class="text-sm font-medium text-white" id="imageTitle">track-1000.jpg</span>
+            <span class="text-xs text-slate-400" id="imageMeta">cam 602 · seg 6714785</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Progress -->
+            <div class="flex items-center gap-2">
+                <div class="w-32 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-brand-500 rounded-full transition-all" id="progressBar" style="width:22%"></div>
+                </div>
+                <span class="text-xs text-slate-400 tabular-nums" id="progressText">110/500</span>
+            </div>
+            <div class="w-px h-5 bg-slate-700"></div>
+            <!-- Actions -->
+            <button onclick="flagImage()" class="p-1.5 hover:bg-slate-700 rounded-lg cursor-pointer transition-colors" title="Flag for review (F)">
+                <i data-lucide="flag" class="w-4 h-4 text-slate-400" id="flagIcon"></i>
+            </button>
+            <button onclick="undoLabel()" class="p-1.5 hover:bg-slate-700 rounded-lg cursor-pointer transition-colors" title="Undo (Ctrl+Z)">
+                <i data-lucide="undo-2" class="w-4 h-4 text-slate-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Image Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Main Image -->
+            <div class="flex-1 flex items-center justify-center p-4 relative" id="imageContainer">
+                <img id="mainImage" src="https://placehold.co/800x600/1e293b/94a3b8?text=track-1000" alt="Vehicle" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+
+                <!-- Nav arrows -->
+                <button onclick="prevImage()" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center cursor-pointer transition-colors">
+                    <i data-lucide="chevron-left" class="w-5 h-5 text-white"></i>
+                </button>
+                <button onclick="nextImage()" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center cursor-pointer transition-colors">
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-white"></i>
+                </button>
+            </div>
+
+            <!-- Thumbnail Strip -->
+            <div class="thumbnail-strip bg-slate-800 border-t border-slate-700 px-4 py-2 flex gap-1.5 overflow-x-auto shrink-0" id="thumbnailStrip">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Label Panel (Right Sidebar) -->
+        <div class="w-80 bg-slate-50 border-l border-slate-200 flex flex-col overflow-y-auto shrink-0">
+
+            <!-- AI Suggestion -->
+            <div class="p-4 bg-amber-50 border-b border-amber-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i>
+                    <span class="text-xs font-semibold text-amber-800 uppercase tracking-wide">AI Suggestion</span>
+                    <span class="text-xs text-amber-500 ml-auto" id="aiConfidence">82%</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5" id="aiSuggestions">
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">pickup</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">white</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Toyota</span>
+                </div>
+                <button onclick="acceptAI()" class="mt-2 w-full text-xs bg-amber-500 hover:bg-amber-600 text-white font-medium py-1.5 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-1.5">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    Accept AI <span class="kbd !bg-amber-400/30 !border-amber-400/50 !text-amber-100 ml-1">A</span>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-5 flex-1">
+
+                <!-- Vehicle Type -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Vehicle Type</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400">Keys 1-6</span>
+                            <button onclick="toggleCustomType()" class="text-[10px] text-brand-600 hover:text-brand-800 cursor-pointer font-medium flex items-center gap-0.5">
+                                <i data-lucide="plus-circle" class="w-3 h-3"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5" id="typeButtons">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <!-- Custom Type Input -->
+                    <div id="customTypeInput" class="hidden mt-2">
+                        <div class="flex gap-1.5">
+                            <input type="text" id="customTypeField" placeholder="e.g. Tuk-tuk, Songthaew..."
+                                   class="flex-1 text-xs px-3 py-2 rounded-lg border border-brand-300 bg-brand-50/50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomType();}">
+                            <button onclick="addCustomType()" class="px-3 py-2 bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium rounded-lg cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> Add
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Type will be added to your list for this session</p>
+                    </div>
+                </div>
+
+                <!-- Color -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Dominant Color</span>
+                        <span class="text-[10px] text-slate-400">Keys Q-P</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2" id="colorSwatches">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Make (Brand) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Make (Brand)</span>
+                        <button onclick="toggleCustomMake()" class="text-[10px] text-brand-600 hover:text-brand-800 cursor-pointer font-medium flex items-center gap-0.5">
+                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Add New
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5" id="makeButtons">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <!-- Custom Make Input -->
+                    <div id="customMakeInput" class="hidden mt-2">
+                        <div class="flex gap-1.5">
+                            <input type="text" id="customMakeField" placeholder="e.g. BYD, MG, GWM..."
+                                   class="flex-1 text-xs px-3 py-2 rounded-lg border border-brand-300 bg-brand-50/50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomMake();}">
+                            <button onclick="addCustomMake()" class="px-3 py-2 bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium rounded-lg cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> Add
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Brand will be added to your list for this session</p>
+                    </div>
+                </div>
+
+                <!-- Model (depends on make) -->
+                <div id="modelSection" class="hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Model</span>
+                        <button onclick="toggleCustomModel()" class="text-[10px] text-brand-600 hover:text-brand-800 cursor-pointer font-medium flex items-center gap-0.5">
+                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Add New
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5" id="modelButtons">
+                        <!-- Rendered by JS based on selected make -->
+                    </div>
+                    <!-- Custom Model Input -->
+                    <div id="customModelInput" class="hidden mt-2">
+                        <div class="flex gap-1.5">
+                            <input type="text" id="customModelField" placeholder="e.g. Atto 3, ZS, Ora..."
+                                   class="flex-1 text-xs px-3 py-2 rounded-lg border border-brand-300 bg-brand-50/50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomModel();}">
+                            <button onclick="addCustomModel()" class="px-3 py-2 bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium rounded-lg cursor-pointer transition-colors shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> Add
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Model will be added under <strong id="customModelMakeLabel">—</strong></p>
+                    </div>
+                </div>
+
+                <!-- Quality -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Image Quality</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5" id="qualityButtons">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Submit Bar -->
+            <div class="p-4 border-t border-slate-200 bg-white">
+                <button onclick="submitAndNext()" id="submitBtn" class="w-full bg-brand-700 hover:bg-brand-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-2 text-sm" disabled>
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Save & Next
+                    <span class="kbd !bg-brand-600/50 !border-brand-500/50 !text-brand-100 ml-1">Enter</span>
+                </button>
+                <button onclick="skipImage()" class="w-full mt-1.5 text-slate-500 hover:text-slate-700 font-medium py-1.5 rounded-lg cursor-pointer transition-colors text-xs flex items-center justify-center gap-1.5">
+                    Skip <span class="kbd ml-1">S</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg hidden transition-opacity z-50">
+        Saved!
+    </div>
+
+    <!-- Keyboard Shortcut Help (toggle with ?) -->
+    <div id="helpModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="toggleHelp()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-[480px] max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-slate-900">Keyboard Shortcuts</h2>
+                <button onclick="toggleHelp()" class="p-1 hover:bg-slate-100 rounded-lg cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h3 class="font-semibold text-slate-700 mb-2">Navigation</h3>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><span class="text-slate-600">Previous image</span><span class="kbd">←</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Next image</span><span class="kbd">→</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Skip</span><span class="kbd">S</span></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-700 mb-2">Vehicle Type</h3>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><span class="text-slate-600">Car</span><span class="kbd">1</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Pickup</span><span class="kbd">2</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Motorcycle</span><span class="kbd">3</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Truck</span><span class="kbd">4</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Van / Bus</span><span class="kbd">5</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Other</span><span class="kbd">6</span></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-700 mb-2">Color</h3>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><span class="text-slate-600">White</span><span class="kbd">Q</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Black</span><span class="kbd">W</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Silver</span><span class="kbd">E</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Red</span><span class="kbd">R</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Blue</span><span class="kbd">T</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Green</span><span class="kbd">Y</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Yellow</span><span class="kbd">U</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Orange</span><span class="kbd">I</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Brown</span><span class="kbd">O</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Other</span><span class="kbd">P</span></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-slate-700 mb-2">Actions</h3>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between"><span class="text-slate-600">Accept AI suggestion</span><span class="kbd">A</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Save & Next</span><span class="kbd">Enter</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Flag for review</span><span class="kbd">F</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Undo</span><span class="kbd">Ctrl+Z</span></div>
+                        <div class="flex justify-between"><span class="text-slate-600">Show shortcuts</span><span class="kbd">?</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================================
+    // CONFIG — Win: เปลี่ยนตรงนี้
+    // ============================================================
+    const CONFIG = {
+        API_BASE: '/vehicle-label/api',
+        S3_BASE: 'https://vehicle-reid-dataset.s3.ap-southeast-1.amazonaws.com',
+    };
+
+    // ============================================================
+    // LOCAL STORAGE — persist custom makes/models across refresh
+    // ============================================================
+    function loadCustomEntries(key) {
+        try { return JSON.parse(localStorage.getItem(`vls_${key}`) || '[]'); }
+        catch { return []; }
+    }
+    function saveCustomEntries(key, data) {
+        localStorage.setItem(`vls_${key}`, JSON.stringify(data));
+    }
+
+    // ============================================================
+    // LABEL DEFINITIONS
+    // ============================================================
+    const DEFAULT_VEHICLE_TYPES = [
+        { id: 'car', label: 'Car', key: '1', icon: 'car' },
+        { id: 'pickup', label: 'Pickup', key: '2', icon: 'truck' },
+        { id: 'motorcycle', label: 'Moto', key: '3', icon: 'bike' },
+        { id: 'truck', label: 'Truck', key: '4', icon: 'container' },
+        { id: 'van_bus', label: 'Van/Bus', key: '5', icon: 'bus' },
+        { id: 'other', label: 'Other', key: '6', icon: 'help-circle' },
+    ];
+    const VEHICLE_TYPES = [...DEFAULT_VEHICLE_TYPES, ...loadCustomEntries('customTypes')];
+
+    const COLORS = [
+        { id: 'white', label: 'White', hex: '#F8FAFC', border: true, key: 'Q' },
+        { id: 'black', label: 'Black', hex: '#1E293B', key: 'W' },
+        { id: 'silver', label: 'Silver', hex: '#94A3B8', key: 'E' },
+        { id: 'red', label: 'Red', hex: '#EF4444', key: 'R' },
+        { id: 'blue', label: 'Blue', hex: '#3B82F6', key: 'T' },
+        { id: 'green', label: 'Green', hex: '#22C55E', key: 'Y' },
+        { id: 'yellow', label: 'Yellow', hex: '#EAB308', key: 'U' },
+        { id: 'orange', label: 'Orange', hex: '#F97316', key: 'I' },
+        { id: 'brown', label: 'Brown', hex: '#92400E', key: 'O' },
+        { id: 'other', label: 'Other', hex: '#D4D4D8', key: 'P' },
+    ];
+
+    // Win: MAKES and MODELS_BY_MAKE are mutable — custom entries get pushed at runtime
+    // and persisted to localStorage so they survive page refresh
+    const DEFAULT_MAKES = [
+        { id: 'toyota', label: 'Toyota' },
+        { id: 'isuzu', label: 'Isuzu' },
+        { id: 'honda', label: 'Honda' },
+        { id: 'mitsubishi', label: 'Mitsubishi' },
+        { id: 'nissan', label: 'Nissan' },
+        { id: 'ford', label: 'Ford' },
+        { id: 'mazda', label: 'Mazda' },
+        { id: 'suzuki', label: 'Suzuki' },
+        { id: 'unknown', label: 'Unknown' },
+    ];
+    const MAKES = [...DEFAULT_MAKES, ...loadCustomEntries('customMakes')];
+
+    const DEFAULT_MODELS_BY_MAKE = {
+        toyota: ['Hilux Revo', 'Yaris', 'Camry', 'Fortuner', 'Corolla Cross', 'Vios', 'C-HR', 'Other'],
+        isuzu: ['D-Max', 'MU-X', 'Other'],
+        honda: ['Civic', 'City', 'HR-V', 'CR-V', 'Jazz', 'Accord', 'Other'],
+        mitsubishi: ['Triton', 'Pajero', 'Xpander', 'Attrage', 'Other'],
+        nissan: ['Navara', 'Almera', 'Kicks', 'Terra', 'Other'],
+        ford: ['Ranger', 'Everest', 'Other'],
+        mazda: ['Mazda 2', 'Mazda 3', 'CX-5', 'CX-30', 'BT-50', 'Other'],
+        suzuki: ['Swift', 'Ciaz', 'Ertiga', 'Carry', 'Other'],
+    };
+    // Merge custom models from localStorage
+    const MODELS_BY_MAKE = { ...DEFAULT_MODELS_BY_MAKE };
+    const customModels = loadCustomEntries('customModels'); // [{make, model}]
+    customModels.forEach(cm => {
+        if (!MODELS_BY_MAKE[cm.make]) MODELS_BY_MAKE[cm.make] = ['Other'];
+        if (!MODELS_BY_MAKE[cm.make].includes(cm.model)) {
+            // Insert before 'Other'
+            const otherIdx = MODELS_BY_MAKE[cm.make].indexOf('Other');
+            if (otherIdx >= 0) MODELS_BY_MAKE[cm.make].splice(otherIdx, 0, cm.model);
+            else MODELS_BY_MAKE[cm.make].push(cm.model);
+        }
+    });
+
+    const QUALITIES = [
+        { id: 'good', label: 'Good', color: 'emerald' },
+        { id: 'fair', label: 'Fair', color: 'amber' },
+        { id: 'poor', label: 'Poor', color: 'orange' },
+        { id: 'unusable', label: 'Bad', color: 'red' },
+    ];
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let currentIndex = 0;
+    let labels = {
+        vehicle_type: null,
+        dominant_color: null,
+        vehicle_make: null,
+        vehicle_model: null,
+        quality: 'good', // default
+    };
+    let history = [];
+
+    // MOCK IMAGE LIST — Win: replace with API
+    const IMAGES = Array.from({ length: 500 }, (_, i) => ({
+        id: `track-${1000 + i}`,
+        filename: `track-${1000 + i}.jpg`,
+        segment_id: 6714785 + Math.floor(i / 10),
+        camera_index: [602, 603, 622, 623, 542][i % 5],
+        thumbnail: `https://placehold.co/120x90/1e293b/64748b?text=${1000 + i}`,
+        full: `https://placehold.co/800x600/1e293b/94a3b8?text=track-${1000 + i}`,
+        ai_type: ['pickup', 'car', 'motorcycle', 'truck'][i % 4],
+        ai_color: ['white', 'black', 'silver', 'red', 'blue'][i % 5],
+        ai_make: ['toyota', 'isuzu', 'honda'][i % 3],
+        ai_confidence: (0.6 + Math.random() * 0.35).toFixed(2),
+    }));
+
+    // ============================================================
+    // RENDER LABEL PANEL
+    // ============================================================
+
+    function renderTypeButtons() {
+        const container = document.getElementById('typeButtons');
+        container.innerHTML = VEHICLE_TYPES.map(t => {
+            const isCustom = t.custom;
+            return `
+            <button class="label-btn flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg border ${isCustom ? 'border-dashed border-brand-300 bg-brand-50/30' : 'border-slate-200 bg-white'} text-slate-600 hover:border-brand-300 hover:bg-brand-50 cursor-pointer text-xs font-medium"
+                    data-type="${t.id}" onclick="selectType('${t.id}')">
+                ${t.key ? `<span class="text-[10px] text-slate-400 font-mono">${t.key}</span>` : `<i data-lucide="plus" class="w-2.5 h-2.5 text-brand-400"></i>`}
+                ${t.label}
+            </button>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function renderColorSwatches() {
+        const container = document.getElementById('colorSwatches');
+        container.innerHTML = COLORS.map(c => `
+            <div class="flex flex-col items-center gap-0.5 cursor-pointer" onclick="selectColor('${c.id}')">
+                <div class="color-swatch w-8 h-8 rounded-full ${c.border ? 'border-2 border-slate-200' : ''}"
+                     style="background:${c.hex}" data-color="${c.id}" title="${c.label} (${c.key})"></div>
+                <span class="text-[10px] text-slate-400 font-mono">${c.key}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderMakeButtons() {
+        const container = document.getElementById('makeButtons');
+        // Custom makes get a subtle indicator
+        container.innerHTML = MAKES.map(m => {
+            const isCustom = m.custom;
+            return `
+            <button class="label-btn py-1.5 px-2 rounded-lg border ${isCustom ? 'border-dashed border-brand-300 bg-brand-50/30' : 'border-slate-200 bg-white'} text-slate-600 hover:border-brand-300 hover:bg-brand-50 cursor-pointer text-xs font-medium flex items-center justify-center gap-1"
+                    data-make="${m.id}" onclick="selectMake('${m.id}')">
+                ${isCustom ? '<i data-lucide="plus" class="w-2.5 h-2.5 text-brand-400"></i>' : ''}${m.label}
+            </button>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function renderModelButtons(makeId) {
+        const section = document.getElementById('modelSection');
+        const container = document.getElementById('modelButtons');
+        const models = MODELS_BY_MAKE[makeId];
+
+        // Show model section for unknown make too — user might want to type model
+        if (!models && makeId !== 'unknown') {
+            section.classList.add('hidden');
+            labels.vehicle_model = null;
+            return;
+        }
+
+        section.classList.remove('hidden');
+        document.getElementById('customModelMakeLabel').textContent = MAKES.find(m => m.id === makeId)?.label || makeId;
+        document.getElementById('customModelInput').classList.add('hidden');
+
+        const modelList = models || ['Other'];
+        // Custom models get a subtle indicator
+        const customModelIds = loadCustomEntries('customModels').map(cm => cm.model);
+        container.innerHTML = modelList.map(m => {
+            const isCustom = customModelIds.includes(m);
+            return `
+            <button class="label-btn py-1.5 px-2 rounded-lg border ${isCustom ? 'border-dashed border-brand-300 bg-brand-50/30' : 'border-slate-200 bg-white'} text-slate-600 hover:border-brand-300 hover:bg-brand-50 cursor-pointer text-xs font-medium flex items-center justify-center gap-1"
+                    data-model="${m}" onclick="selectModel('${m}')">
+                ${isCustom ? '<i data-lucide="plus" class="w-2.5 h-2.5 text-brand-400"></i>' : ''}${m}
+            </button>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    // ============================================================
+    // CUSTOM MAKE / MODEL — Add new brands and models on the fly
+    // ============================================================
+
+    function toggleCustomMake() {
+        const el = document.getElementById('customMakeInput');
+        el.classList.toggle('hidden');
+        if (!el.classList.contains('hidden')) {
+            const field = document.getElementById('customMakeField');
+            field.value = '';
+            field.focus();
+        }
+    }
+
+    function toggleCustomModel() {
+        const el = document.getElementById('customModelInput');
+        el.classList.toggle('hidden');
+        if (!el.classList.contains('hidden')) {
+            const field = document.getElementById('customModelField');
+            field.value = '';
+            field.focus();
+        }
+    }
+
+    function addCustomMake() {
+        const field = document.getElementById('customMakeField');
+        const raw = field.value.trim();
+        if (!raw) return;
+
+        const id = raw.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+
+        // Check duplicate
+        if (MAKES.find(m => m.id === id)) {
+            selectMake(id);
+            document.getElementById('customMakeInput').classList.add('hidden');
+            showToast(`"${label}" already exists — selected`);
+            return;
+        }
+
+        // Add to runtime list (before Unknown)
+        const unknownIdx = MAKES.findIndex(m => m.id === 'unknown');
+        const newMake = { id, label, custom: true };
+        if (unknownIdx >= 0) MAKES.splice(unknownIdx, 0, newMake);
+        else MAKES.push(newMake);
+
+        // Init empty model list with Other
+        MODELS_BY_MAKE[id] = ['Other'];
+
+        // Persist to localStorage
+        const stored = loadCustomEntries('customMakes');
+        stored.push(newMake);
+        saveCustomEntries('customMakes', stored);
+
+        // Re-render and select
+        renderMakeButtons();
+        selectMake(id);
+        document.getElementById('customMakeInput').classList.add('hidden');
+        showToast(`"${label}" added as new brand`);
+    }
+
+    function addCustomModel() {
+        const field = document.getElementById('customModelField');
+        const raw = field.value.trim();
+        if (!raw || !labels.vehicle_make) return;
+
+        const makeId = labels.vehicle_make;
+        const modelName = raw.charAt(0).toUpperCase() + raw.slice(1);
+
+        // Check duplicate
+        if (MODELS_BY_MAKE[makeId]?.includes(modelName)) {
+            selectModel(modelName);
+            document.getElementById('customModelInput').classList.add('hidden');
+            showToast(`"${modelName}" already exists — selected`);
+            return;
+        }
+
+        // Add to runtime list (before Other)
+        if (!MODELS_BY_MAKE[makeId]) MODELS_BY_MAKE[makeId] = [];
+        const otherIdx = MODELS_BY_MAKE[makeId].indexOf('Other');
+        if (otherIdx >= 0) MODELS_BY_MAKE[makeId].splice(otherIdx, 0, modelName);
+        else MODELS_BY_MAKE[makeId].push(modelName);
+
+        // Persist to localStorage
+        const stored = loadCustomEntries('customModels');
+        stored.push({ make: makeId, model: modelName });
+        saveCustomEntries('customModels', stored);
+
+        // Re-render and select
+        renderModelButtons(makeId);
+        selectModel(modelName);
+        document.getElementById('customModelInput').classList.add('hidden');
+        showToast(`"${modelName}" added under ${MAKES.find(m => m.id === makeId)?.label || makeId}`);
+    }
+
+    function toggleCustomType() {
+        const el = document.getElementById('customTypeInput');
+        el.classList.toggle('hidden');
+        if (!el.classList.contains('hidden')) {
+            const field = document.getElementById('customTypeField');
+            field.value = '';
+            field.focus();
+        }
+    }
+
+    function addCustomType() {
+        const field = document.getElementById('customTypeField');
+        const raw = field.value.trim();
+        if (!raw) return;
+
+        const id = raw.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+
+        // Check duplicate
+        if (VEHICLE_TYPES.find(t => t.id === id)) {
+            selectType(id);
+            document.getElementById('customTypeInput').classList.add('hidden');
+            showToast(`"${label}" already exists — selected`);
+            return;
+        }
+
+        // Add to runtime list (before Other)
+        const otherIdx = VEHICLE_TYPES.findIndex(t => t.id === 'other');
+        const newType = { id, label, custom: true };
+        if (otherIdx >= 0) VEHICLE_TYPES.splice(otherIdx, 0, newType);
+        else VEHICLE_TYPES.push(newType);
+
+        // Persist to localStorage
+        const stored = loadCustomEntries('customTypes');
+        stored.push(newType);
+        saveCustomEntries('customTypes', stored);
+
+        // Re-render and select
+        renderTypeButtons();
+        selectType(id);
+        document.getElementById('customTypeInput').classList.add('hidden');
+        showToast(`"${label}" added as new vehicle type`);
+    }
+
+    function renderQualityButtons() {
+        const container = document.getElementById('qualityButtons');
+        container.innerHTML = QUALITIES.map(q => `
+            <button class="label-btn py-1.5 px-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-${q.color}-300 hover:bg-${q.color}-50 cursor-pointer text-xs font-medium"
+                    data-quality="${q.id}" onclick="selectQuality('${q.id}')">
+                ${q.label}
+            </button>
+        `).join('');
+    }
+
+    function renderThumbnails() {
+        const container = document.getElementById('thumbnailStrip');
+        const start = Math.max(0, currentIndex - 5);
+        const end = Math.min(IMAGES.length, currentIndex + 15);
+        const slice = IMAGES.slice(start, end);
+
+        container.innerHTML = slice.map((img, i) => {
+            const idx = start + i;
+            return `
+                <img src="${img.thumbnail}" alt="${img.filename}"
+                     class="w-14 h-10 object-cover rounded cursor-pointer shrink-0 ${idx === currentIndex ? 'active' : 'opacity-60'}"
+                     onclick="goToImage(${idx})">
+            `;
+        }).join('');
+
+        // Scroll active into view
+        const activeThumb = container.querySelector('.active');
+        if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+
+    // ============================================================
+    // SELECTION HANDLERS
+    // ============================================================
+
+    function selectType(id) {
+        labels.vehicle_type = id;
+        document.querySelectorAll('#typeButtons .label-btn').forEach(b => {
+            b.classList.toggle('selected', b.dataset.type === id);
+            b.classList.toggle('bg-brand-50', b.dataset.type === id);
+            b.classList.toggle('border-brand-500', b.dataset.type === id);
+            b.classList.toggle('text-brand-700', b.dataset.type === id);
+        });
+        document.getElementById('customTypeInput').classList.add('hidden');
+        updateSubmitBtn();
+    }
+
+    function selectColor(id) {
+        labels.dominant_color = id;
+        document.querySelectorAll('.color-swatch').forEach(s => {
+            s.classList.toggle('selected', s.dataset.color === id);
+        });
+        updateSubmitBtn();
+    }
+
+    function selectMake(id) {
+        labels.vehicle_make = id;
+        labels.vehicle_model = null;
+        document.querySelectorAll('#makeButtons .label-btn').forEach(b => {
+            b.classList.toggle('selected', b.dataset.make === id);
+            b.classList.toggle('bg-brand-50', b.dataset.make === id);
+            b.classList.toggle('border-brand-500', b.dataset.make === id);
+            b.classList.toggle('text-brand-700', b.dataset.make === id);
+        });
+        // Hide custom make input when selecting
+        document.getElementById('customMakeInput').classList.add('hidden');
+        renderModelButtons(id);
+        updateSubmitBtn();
+    }
+
+    function selectModel(name) {
+        labels.vehicle_model = name;
+        document.querySelectorAll('#modelButtons .label-btn').forEach(b => {
+            b.classList.toggle('selected', b.dataset.model === name);
+            b.classList.toggle('bg-brand-50', b.dataset.model === name);
+            b.classList.toggle('border-brand-500', b.dataset.model === name);
+            b.classList.toggle('text-brand-700', b.dataset.model === name);
+        });
+        updateSubmitBtn();
+    }
+
+    function selectQuality(id) {
+        labels.quality = id;
+        document.querySelectorAll('#qualityButtons .label-btn').forEach(b => {
+            const q = QUALITIES.find(q => q.id === b.dataset.quality);
+            b.classList.toggle('selected', b.dataset.quality === id);
+            b.classList.toggle(`bg-${q?.color}-50`, b.dataset.quality === id);
+            b.classList.toggle(`border-${q?.color}-500`, b.dataset.quality === id);
+            b.classList.toggle(`text-${q?.color}-700`, b.dataset.quality === id);
+        });
+    }
+
+    function updateSubmitBtn() {
+        const btn = document.getElementById('submitBtn');
+        const ready = labels.vehicle_type && labels.dominant_color;
+        btn.disabled = !ready;
+    }
+
+    // ============================================================
+    // ACTIONS
+    // ============================================================
+
+    function loadImage(idx) {
+        currentIndex = idx;
+        const img = IMAGES[idx];
+        if (!img) return;
+
+        // Reset labels
+        labels = { vehicle_type: null, dominant_color: null, vehicle_make: null, vehicle_model: null, quality: 'good' };
+
+        // Update UI
+        document.getElementById('imageTitle').textContent = img.filename;
+        document.getElementById('imageMeta').textContent = `cam ${img.camera_index} · seg ${img.segment_id}`;
+        document.getElementById('mainImage').src = img.full;
+        document.getElementById('progressBar').style.width = `${Math.round((idx / IMAGES.length) * 100)}%`;
+        document.getElementById('progressText').textContent = `${idx}/${IMAGES.length}`;
+        document.getElementById('flagIcon').classList.remove('text-red-500');
+        document.getElementById('flagIcon').classList.add('text-slate-400');
+
+        // AI suggestions
+        document.getElementById('aiConfidence').textContent = `${Math.round(img.ai_confidence * 100)}%`;
+        document.getElementById('aiSuggestions').innerHTML = `
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">${img.ai_type}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">${img.ai_color}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">${img.ai_make}</span>
+        `;
+
+        // Reset all selections visually
+        document.querySelectorAll('.label-btn.selected, .color-swatch.selected').forEach(el => {
+            el.classList.remove('selected', 'bg-brand-50', 'border-brand-500', 'text-brand-700');
+        });
+        document.getElementById('modelSection').classList.add('hidden');
+        selectQuality('good');
+        updateSubmitBtn();
+        renderThumbnails();
+    }
+
+    function acceptAI() {
+        const img = IMAGES[currentIndex];
+        if (img.ai_type) selectType(img.ai_type);
+        if (img.ai_color) selectColor(img.ai_color);
+        if (img.ai_make) selectMake(img.ai_make);
+        showToast('AI suggestion accepted');
+    }
+
+    function submitAndNext() {
+        if (!labels.vehicle_type || !labels.dominant_color) return;
+
+        const img = IMAGES[currentIndex];
+        history.push({ index: currentIndex, labels: { ...labels } });
+
+        // Win: POST to API here
+        // fetch(`${CONFIG.API_BASE}/label`, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({
+        //         track_id: img.id,
+        //         segment_id: img.segment_id,
+        //         camera_index: img.camera_index,
+        //         ...labels,
+        //         labeled_by: 'current_user',
+        //     })
+        // });
+
+        showToast('Saved!');
+        nextImage();
+    }
+
+    function skipImage() {
+        nextImage();
+    }
+
+    function nextImage() {
+        if (currentIndex < IMAGES.length - 1) loadImage(currentIndex + 1);
+    }
+
+    function prevImage() {
+        if (currentIndex > 0) loadImage(currentIndex - 1);
+    }
+
+    function goToImage(idx) {
+        loadImage(idx);
+    }
+
+    function flagImage() {
+        const icon = document.getElementById('flagIcon');
+        const isFlagged = icon.classList.contains('text-red-500');
+        icon.classList.toggle('text-red-500', !isFlagged);
+        icon.classList.toggle('text-slate-400', isFlagged);
+        showToast(isFlagged ? 'Flag removed' : 'Flagged for review');
+    }
+
+    function undoLabel() {
+        const last = history.pop();
+        if (last) {
+            loadImage(last.index);
+            showToast('Undone');
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 1500);
+    }
+
+    function toggleHelp() {
+        document.getElementById('helpModal').classList.toggle('hidden');
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+
+    const TYPE_KEYS = { '1': 'car', '2': 'pickup', '3': 'motorcycle', '4': 'truck', '5': 'van_bus', '6': 'other' };
+    const COLOR_KEYS = { 'q': 'white', 'w': 'black', 'e': 'silver', 'r': 'red', 't': 'blue', 'y': 'green', 'u': 'yellow', 'i': 'orange', 'o': 'brown', 'p': 'other' };
+
+    document.addEventListener('keydown', (e) => {
+        // Don't handle if modal open
+        if (!document.getElementById('helpModal').classList.contains('hidden')) {
+            if (e.key === 'Escape') toggleHelp();
+            return;
+        }
+
+        const key = e.key.toLowerCase();
+
+        // Navigation
+        if (key === 'arrowleft') { e.preventDefault(); prevImage(); }
+        if (key === 'arrowright') { e.preventDefault(); nextImage(); }
+
+        // Vehicle type
+        if (TYPE_KEYS[key]) { selectType(TYPE_KEYS[key]); }
+
+        // Color
+        if (COLOR_KEYS[key]) { selectColor(COLOR_KEYS[key]); }
+
+        // Actions
+        if (key === 'a') { acceptAI(); }
+        if (key === 'enter') { e.preventDefault(); submitAndNext(); }
+        if (key === 's') { skipImage(); }
+        if (key === 'f') { flagImage(); }
+        if (key === '?' || (e.shiftKey && key === '/')) { toggleHelp(); }
+        if (e.ctrlKey && key === 'z') { e.preventDefault(); undoLabel(); }
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    renderTypeButtons();
+    renderColorSwatches();
+    renderMakeButtons();
+    renderQualityButtons();
+    loadImage(0);
+    lucide.createIcons();
+    </script>
+</body>
+</html>
