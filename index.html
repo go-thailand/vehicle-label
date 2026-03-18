@@ -113,6 +113,11 @@
                     <span class="text-xs text-slate-400" id="batchCount">-</span>
                 </div>
                 <div class="divide-y divide-slate-50" id="batchList"></div>
+                <div id="batchLoadMore" class="hidden p-3 text-center border-t border-slate-100">
+                    <button onclick="loadMoreBatches()" id="loadMoreBtn" class="text-xs font-medium text-brand-600 hover:text-brand-800 cursor-pointer transition-colors px-4 py-2 rounded-lg hover:bg-brand-50">
+                        Load more batches...
+                    </button>
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -315,10 +320,12 @@
         ].join('<div class="border-t border-slate-100 my-3"></div>');
     }
 
-    function renderBatches(batches) {
+    const batchPagination = { page: 0, totalPages: 0, total: 0, loading: false };
+
+    function renderBatches(batches, append = false) {
         const container = document.getElementById('batchList');
-        document.getElementById('batchCount').textContent = `${formatNumber(batches.length)} batches`;
-        container.innerHTML = batches.map(batch => {
+        document.getElementById('batchCount').textContent = `${formatNumber(batchPagination.total)} batches`;
+        const html = batches.map(batch => {
             const pct = batch.object_count > 0 ? Math.round((batch.labeled_count / batch.object_count) * 100) : 0;
             const statusColor = pct === 100 ? 'bg-emerald-500' : pct > 0 ? 'bg-amber-400' : 'bg-slate-200';
             const statusText = pct === 100 ? 'Done' : pct > 0 ? 'In Progress' : 'Not Started';
@@ -341,7 +348,37 @@
                 </a>
             `;
         }).join('');
+        if (append) {
+            container.insertAdjacentHTML('beforeend', html);
+        } else {
+            container.innerHTML = html;
+        }
+        // Show/hide load more button
+        const loadMoreEl = document.getElementById('batchLoadMore');
+        if (batchPagination.page < batchPagination.totalPages) {
+            loadMoreEl.classList.remove('hidden');
+            document.getElementById('loadMoreBtn').textContent = `Load more batches (${batchPagination.page}/${batchPagination.totalPages})`;
+        } else {
+            loadMoreEl.classList.add('hidden');
+        }
         lucide.createIcons();
+    }
+
+    async function loadMoreBatches() {
+        if (batchPagination.loading || batchPagination.page >= batchPagination.totalPages) return;
+        batchPagination.loading = true;
+        document.getElementById('loadMoreBtn').textContent = 'Loading...';
+        try {
+            const data = await fetchJson(`${CONFIG.API_BASE}?action=list-batches&page=${batchPagination.page + 1}&per_page=50`);
+            batchPagination.page = data.page;
+            batchPagination.totalPages = data.total_pages;
+            batchPagination.total = data.total;
+            renderBatches(data.batches || [], true);
+        } catch(e) {
+            document.getElementById('loadMoreBtn').textContent = 'Error — click to retry';
+        } finally {
+            batchPagination.loading = false;
+        }
     }
 
     async function fetchJson(url) {
@@ -360,17 +397,20 @@
             fetchJson(`${CONFIG.API_BASE}?action=stats&type=summary`),
             fetchJson(`${CONFIG.API_BASE}?action=stats&type=distribution`),
             fetchJson(`${CONFIG.API_BASE}?action=stats&type=leaderboard`),
-            fetchJson(`${CONFIG.API_BASE}?action=list-batches`)
+            fetchJson(`${CONFIG.API_BASE}?action=list-batches&page=1&per_page=50`)
         ]);
 
         const summary = summaryPayload.stats || {};
         const distribution = distributionPayload.stats || {};
         const leaderboard = leaderboardPayload.stats || {};
         const batches = batchesPayload.batches || [];
+        batchPagination.page = batchesPayload.page || 1;
+        batchPagination.totalPages = batchesPayload.total_pages || 1;
+        batchPagination.total = batchesPayload.total || batches.length;
 
         document.getElementById('storageMode').textContent = summary.storage || 'database';
         document.getElementById('statTotal').textContent = formatNumber(summary.total_images);
-        document.getElementById('statTotalMeta').textContent = `${formatNumber(batches.length)} batches from S3`;
+        document.getElementById('statTotalMeta').textContent = `${formatNumber(batchPagination.total)} batches from S3`;
         document.getElementById('statLabeled').textContent = formatNumber(summary.labeled_count ?? summary.labeled);
         document.getElementById('statLabeledMeta').textContent = `${summary.percentage_complete || 0}% complete`;
         document.getElementById('statRemaining').textContent = formatNumber(summary.remaining_count ?? summary.remaining);
