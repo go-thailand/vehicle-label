@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Label System — Browse</title>
+    <title>Vehicle Label System - Browse</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
@@ -26,196 +26,291 @@
         .image-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.15); }
         .filter-chip { transition: all 0.15s ease; }
         .filter-chip:hover { background-color: #DBEAFE; }
-        .filter-chip.active { background-color: #1E40AF; color: white; }
+        .filter-chip.active { background-color: #1E40AF; color: white; border-color: #1E40AF; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-
-    <!-- Navbar -->
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-brand-700 rounded-lg flex items-center justify-center">
-                        <i data-lucide="scan-line" class="w-5 h-5 text-white"></i>
-                    </div>
+                    <div class="w-8 h-8 bg-brand-700 rounded-lg flex items-center justify-center"><i data-lucide="scan-line" class="w-5 h-5 text-white"></i></div>
                     <span class="text-lg font-semibold text-slate-900">Vehicle Label System</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <a href="index.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">Dashboard</a>
+                    <a href="index.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Dashboard</a>
                     <a href="list.html" class="text-sm font-medium text-brand-700 border-b-2 border-brand-700 pb-0.5">Browse</a>
-                    <a href="label.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">Label</a>
+                    <a href="label.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Label</a>
+                    <div class="w-px h-5 bg-slate-200"></div>
+                    <button id="labelerSwitcher" type="button" class="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                        <i data-lucide="user-round" class="w-4 h-4"></i>
+                        <span id="labelerDisplay">labeler: -</span>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        <!-- Batch Header -->
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-4 gap-4 flex-wrap">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                </a>
-                <h1 class="text-lg font-semibold text-slate-900" id="batchTitle">Batch 001</h1>
-                <span class="text-sm text-slate-400" id="batchInfo">500 images · cam 602</span>
+                <a href="index.html" class="text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+                <h1 class="text-lg font-semibold text-slate-900" id="batchTitle">Loading batch...</h1>
+                <span class="text-sm text-slate-400" id="batchInfo">Preparing image list</span>
             </div>
-            <a href="label.html?batch=batch-001&start=0" class="inline-flex items-center gap-2 bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-800 cursor-pointer transition-colors">
-                <i data-lucide="play" class="w-4 h-4"></i>
-                Start Labeling
-            </a>
+            <a id="startLabelingBtn" href="label.html" class="inline-flex items-center gap-2 bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-800 transition-colors"><i data-lucide="play" class="w-4 h-4"></i>Start Labeling</a>
         </div>
 
-        <!-- Filters -->
         <div class="flex flex-wrap items-center gap-2 mb-4">
-            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide mr-1">Filter:</span>
-            <button class="filter-chip active text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-filter="all">
-                All <span class="ml-1 opacity-70">500</span>
-            </button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="unlabeled">
-                <span class="inline-block w-2 h-2 rounded-full bg-slate-300 mr-1"></span>Unlabeled <span class="ml-1 opacity-70">380</span>
-            </button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="labeled">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1"></span>Labeled <span class="ml-1 opacity-70">110</span>
-            </button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="flagged">
-                <span class="inline-block w-2 h-2 rounded-full bg-red-400 mr-1"></span>Flagged <span class="ml-1 opacity-70">10</span>
-            </button>
-            <div class="w-px h-5 bg-slate-200 mx-1"></div>
-            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide mr-1">Type:</span>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-type="pickup">Pickup</button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-type="car">Car</button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-type="motorcycle">Motorcycle</button>
-            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-type="truck">Truck</button>
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide mr-1">Status:</span>
+            <button class="filter-chip active text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-filter="all">All <span class="ml-1 opacity-70" id="countAll">0</span></button>
+            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="unlabeled"><span class="inline-block w-2 h-2 rounded-full bg-slate-300 mr-1"></span>Unlabeled <span class="ml-1 opacity-70" id="countUnlabeled">0</span></button>
+            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="labeled"><span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1"></span>Labeled <span class="ml-1 opacity-70" id="countLabeled">0</span></button>
+            <button class="filter-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 cursor-pointer font-medium" data-filter="flagged"><span class="inline-block w-2 h-2 rounded-full bg-red-400 mr-1"></span>Flagged <span class="ml-1 opacity-70" id="countFlagged">0</span></button>
         </div>
 
-        <!-- Image Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3" id="imageGrid">
-            <!-- Rendered by JS -->
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
-            <span class="text-sm text-slate-500">Showing 1-60 of 500</span>
-            <div class="flex items-center gap-1">
-                <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-400 cursor-not-allowed">Prev</button>
-                <button class="px-3 py-1.5 text-sm rounded-lg bg-brand-700 text-white font-medium cursor-pointer">1</button>
-                <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">2</button>
-                <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">3</button>
-                <span class="px-2 text-slate-400">...</span>
-                <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">9</button>
-                <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">Next</button>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex flex-wrap items-center gap-2" id="typeFilters">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wide mr-1">Type:</span>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="all">All</button>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="car">Car</button>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="pickup">Pickup</button>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="motorcycle">Motorcycle</button>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="truck">Truck</button>
+                <button class="type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-type="van_bus">Van/Bus</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="perPageSelect" class="text-xs font-medium text-slate-500 uppercase tracking-wide">Per Page</label>
+                <select id="perPageSelect" class="text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
             </div>
         </div>
 
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex flex-wrap items-center gap-2" id="aiTypeFilters">
+                <span class="text-xs font-medium text-slate-500 uppercase tracking-wide mr-1">AI Type:</span>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="all">All</button>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="car">Car</button>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="pickup">Pickup</button>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="motorcycle">Motorcycle</button>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="truck">Truck</button>
+                <button class="ai-type-chip text-xs px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer font-medium" data-ai-type="van_bus">Van/Bus</button>
+            </div>
+            <div class="flex items-center gap-2 min-w-[260px] max-w-md w-full sm:w-auto">
+                <label for="searchInput" class="text-xs font-medium text-slate-500 uppercase tracking-wide whitespace-nowrap">Search</label>
+                <input id="searchInput" type="text" placeholder="filename or track_id" class="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3" id="imageGrid"></div>
+
+        <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+            <span class="text-sm text-slate-500" id="paginationInfo">Showing 0-0 of 0</span>
+            <div class="flex items-center gap-1" id="pagination"></div>
+        </div>
     </main>
 
-    <!-- Quick Preview Modal -->
-    <div id="previewModal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closePreview()"></div>
-        <div class="absolute inset-4 md:inset-12 lg:inset-20 bg-white rounded-2xl overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between p-4 border-b border-slate-100">
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-semibold text-slate-900" id="previewTitle">track-351.jpg</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" id="previewMeta">cam 602 · seg 6714785</span>
+    <div id="labelerModal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5 text-brand-700"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">เลือกผู้ label</h2>
+                        <p class="text-sm text-slate-500">ระบบจะจำชื่อไว้ในเครื่องนี้ และใช้กับทุกหน้า</p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a id="previewLabelBtn" href="#" class="inline-flex items-center gap-1.5 bg-brand-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-brand-800 cursor-pointer transition-colors">
-                        <i data-lucide="tag" class="w-3.5 h-3.5"></i>Label this
-                    </a>
-                    <button onclick="closePreview()" class="p-1.5 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
-                        <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
-                    </button>
+                <div class="mt-5">
+                    <label for="labelerSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Labeler</label>
+                    <select id="labelerSelect" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">Select a labeler</option>
+                        <option value="Best">Best</option>
+                        <option value="S">S</option>
+                        <option value="Jame">Jame</option>
+                        <option value="Opal">Opal</option>
+                    </select>
                 </div>
-            </div>
-            <div class="flex-1 flex items-center justify-center bg-slate-950 p-4">
-                <img id="previewImage" src="" alt="Vehicle preview" class="max-w-full max-h-full object-contain rounded">
-            </div>
-            <div class="p-4 border-t border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-4" id="previewLabels">
-                    <span class="text-xs text-slate-400">No labels yet</span>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">←</kbd>
-                    <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">→</kbd>
-                    to navigate
-                    <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">Esc</kbd>
-                    to close
+                <div class="mt-5 flex items-center justify-end gap-3">
+                    <button id="labelerCancel" type="button" class="hidden px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
+                    <button id="labelerConfirm" type="button" class="px-4 py-2 rounded-xl bg-brand-700 text-white text-sm font-medium hover:bg-brand-800 transition-colors">Continue</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="previewModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closePreview()"></div>
+        <div class="absolute inset-4 md:inset-12 lg:inset-20 bg-white rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-slate-900" id="previewTitle">-</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" id="previewMeta">-</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a id="previewLabelBtn" href="#" class="inline-flex items-center gap-1.5 bg-brand-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-brand-800 transition-colors"><i data-lucide="tag" class="w-3.5 h-3.5"></i>Label this</a>
+                    <button onclick="closePreview()" class="p-1.5 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+                </div>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-slate-950 p-4"><img id="previewImage" src="" alt="Vehicle preview" class="max-w-full max-h-full object-contain rounded"></div>
+            <div class="p-4 border-t border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-wrap" id="previewLabels"></div>
+                <div class="flex items-center gap-2 text-xs text-slate-400"><kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">&larr;</kbd><kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">&rarr;</kbd>to navigate <kbd class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">Esc</kbd>to close</div>
+            </div>
+        </div>
+    </div>
+
     <script>
-    // ============================================================
-    // CONFIG
-    // ============================================================
     const CONFIG = {
-        S3_BASE: 'https://vehicle-reid-dataset.s3.ap-southeast-1.amazonaws.com',
+        API_BASE: '/vehicle-label/public/vehicle-label/api/index.php',
+        STORAGE_KEY: 'vls_labeler_name',
         IMAGES_PER_PAGE: 60,
+        COLOR_MAP: { white:'#F1F5F9', black:'#1E293B', silver:'#94A3B8', blue:'#3B82F6', red:'#EF4444', green:'#22C55E', yellow:'#EAB308', orange:'#F97316', brown:'#92400E', other:'#D4D4D8' }
     };
 
-    // ============================================================
-    // MOCK DATA — Win: replace with API
-    // ============================================================
-    const STATUSES = ['unlabeled', 'unlabeled', 'unlabeled', 'labeled', 'labeled', 'flagged'];
-    const TYPES = ['pickup', 'car', 'motorcycle', 'truck', 'van', null];
-    const COLORS_DISPLAY = { white:'#F1F5F9', black:'#1E293B', silver:'#94A3B8', blue:'#3B82F6', red:'#EF4444', green:'#22C55E' };
-    const COLOR_NAMES = Object.keys(COLORS_DISPLAY);
+    const params = new URLSearchParams(window.location.search);
+    const batchId = params.get('batch') || 'batch-001';
+    const state = {
+        images: [],
+        filter: params.get('status') || 'all',
+        type: params.get('type') || 'all',
+        aiType: params.get('ai_type') || 'all',
+        search: params.get('search') || '',
+        page: Math.max(1, Number(params.get('page') || 1)),
+        perPage: Math.max(1, Math.min(200, Number(params.get('per_page') || CONFIG.IMAGES_PER_PAGE))),
+        total: 0,
+        totalPages: 1,
+        previewIndex: 0
+    };
+    const labelerState = {
+        value: localStorage.getItem(CONFIG.STORAGE_KEY) || '',
+        allowCancel: false
+    };
+    let labelerResolver = null;
 
-    const MOCK_IMAGES = Array.from({ length: 60 }, (_, i) => {
-        const status = STATUSES[Math.floor(Math.random() * STATUSES.length)];
-        const hasLabel = status === 'labeled';
-        return {
-            id: `track-${1000 + i}`,
-            filename: `track-${1000 + i}.jpg`,
-            segment_id: 6714785 + Math.floor(i / 10),
-            camera_index: [602, 603, 622, 623, 542][i % 5],
-            // Win: replace with actual S3 URL
-            thumbnail: `https://placehold.co/200x150/1e293b/94a3b8?text=track-${1000+i}`,
-            status: status,
-            vehicle_type: hasLabel ? TYPES[Math.floor(Math.random() * (TYPES.length - 1))] : null,
-            dominant_color: hasLabel ? COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)] : null,
-            confidence: hasLabel ? (0.6 + Math.random() * 0.35).toFixed(2) : null,
-        };
-    });
+    function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(value || 0);
+    }
 
-    // ============================================================
-    // RENDER
-    // ============================================================
+    function setLabeler(labeler) {
+        labelerState.value = labeler;
+        localStorage.setItem(CONFIG.STORAGE_KEY, labeler);
+        document.getElementById('labelerDisplay').textContent = `labeler: ${labeler}`;
+        hideLabelerModal();
+        if (labelerResolver) {
+            labelerResolver(labeler);
+            labelerResolver = null;
+        }
+    }
+
+    function showLabelerModal(allowCancel = false) {
+        labelerState.allowCancel = allowCancel && Boolean(labelerState.value);
+        document.getElementById('labelerSelect').value = labelerState.value || '';
+        document.getElementById('labelerCancel').classList.toggle('hidden', !labelerState.allowCancel);
+        document.getElementById('labelerModal').classList.remove('hidden');
+    }
+
+    function hideLabelerModal() {
+        document.getElementById('labelerModal').classList.add('hidden');
+    }
+
+    function ensureLabeler() {
+        if (labelerState.value) {
+            document.getElementById('labelerDisplay').textContent = `labeler: ${labelerState.value}`;
+            return Promise.resolve(labelerState.value);
+        }
+
+        showLabelerModal(false);
+        return new Promise(resolve => {
+            labelerResolver = resolve;
+        });
+    }
+
+    function updateUrl() {
+        const next = new URLSearchParams();
+        next.set('batch', batchId);
+        if (state.page > 1) next.set('page', String(state.page));
+        if (state.perPage !== CONFIG.IMAGES_PER_PAGE) next.set('per_page', String(state.perPage));
+        if (state.filter !== 'all') next.set('status', state.filter);
+        if (state.type !== 'all') next.set('type', state.type);
+        if (state.aiType !== 'all') next.set('ai_type', state.aiType);
+        if (state.search.trim() !== '') next.set('search', state.search.trim());
+        history.replaceState({}, '', `list.html?${next.toString()}`);
+    }
+
+    function updateFilterUi() {
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.filter === state.filter);
+        });
+        document.querySelectorAll('.type-chip').forEach(chip => {
+            const active = chip.dataset.type === state.type;
+            chip.classList.toggle('bg-brand-700', active);
+            chip.classList.toggle('text-white', active);
+            chip.classList.toggle('border-brand-700', active);
+            chip.classList.toggle('text-slate-600', !active);
+        });
+        document.querySelectorAll('.ai-type-chip').forEach(chip => {
+            const active = chip.dataset.aiType === state.aiType;
+            chip.classList.toggle('bg-amber-500', active);
+            chip.classList.toggle('text-white', active);
+            chip.classList.toggle('border-amber-500', active);
+            chip.classList.toggle('text-slate-600', !active);
+        });
+        document.getElementById('perPageSelect').value = String(state.perPage);
+        document.getElementById('searchInput').value = state.search;
+    }
+
+    function renderCounts() {
+        const counts = { all: state.total, unlabeled: 0, labeled: 0, flagged: 0 };
+        state.images.forEach(image => {
+            counts[image.status] = (counts[image.status] || 0) + 1;
+        });
+        document.getElementById('countAll').textContent = formatNumber(counts.all);
+        document.getElementById('countUnlabeled').textContent = state.filter === 'unlabeled' ? formatNumber(state.total) : formatNumber(counts.unlabeled);
+        document.getElementById('countLabeled').textContent = state.filter === 'labeled' ? formatNumber(state.total) : formatNumber(counts.labeled);
+        document.getElementById('countFlagged').textContent = state.filter === 'flagged' ? formatNumber(state.total) : formatNumber(counts.flagged);
+    }
 
     function renderGrid() {
         const grid = document.getElementById('imageGrid');
-        grid.innerHTML = MOCK_IMAGES.map((img, idx) => {
-            const statusDot = img.status === 'labeled' ? 'bg-emerald-400' :
-                              img.status === 'flagged' ? 'bg-red-400' : 'bg-slate-300';
-            const typeLabel = img.vehicle_type || '—';
-            const colorDot = img.dominant_color ? `<div class="w-2.5 h-2.5 rounded-full shrink-0 ${img.dominant_color === 'white' ? 'border border-slate-300' : ''}" style="background:${COLORS_DISPLAY[img.dominant_color] || '#D4D4D8'}"></div>` : '';
+        if (!state.images.length) {
+            grid.innerHTML = '<div class="col-span-full bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-500">No images match this filter.</div>';
+            return;
+        }
 
+        grid.innerHTML = state.images.map(image => {
+            const statusDot = image.status === 'labeled' ? 'bg-emerald-400' : image.status === 'flagged' ? 'bg-red-400' : 'bg-slate-300';
+            const review = image.review || {};
+            const typeLabel = review.vehicle_type || '-';
+            const makeModel = [review.vehicle_make, review.vehicle_model].filter(Boolean).join(' / ');
+            const aiType = review.ai_vehicle_type || '-';
+            const color = CONFIG.COLOR_MAP[(review.dominant_color || '').toLowerCase()];
+            const borderClass = (review.dominant_color || '').toLowerCase() === 'white' ? 'border border-slate-300' : '';
             return `
-                <div class="image-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer group" onclick="openPreview(${idx})">
-                    <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                        <img src="${img.thumbnail}" alt="${img.filename}" class="w-full h-full object-cover" loading="lazy">
-                        <div class="absolute top-2 left-2 flex items-center gap-1">
-                            <div class="w-2 h-2 rounded-full ${statusDot}"></div>
-                        </div>
-                        ${img.status === 'flagged' ? '<div class="absolute top-2 right-2"><i data-lucide="flag" class="w-3.5 h-3.5 text-red-500"></i></div>' : ''}
-                        <div class="absolute inset-0 bg-brand-700/0 group-hover:bg-brand-700/10 transition-colors flex items-center justify-center">
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div class="bg-white/90 backdrop-blur rounded-lg px-3 py-1.5 text-xs font-medium text-brand-700">Preview</div>
-                            </div>
-                        </div>
+                <div class="image-card bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer group" data-track-id="${image.track_id}">
+                    <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden" onclick="openPreviewByTrack('${image.track_id}')">
+                        <img src="${image.image_url}" alt="${image.filename}" class="w-full h-full object-cover" loading="lazy">
+                        <div class="absolute top-2 left-2 flex items-center gap-1"><div class="w-2 h-2 rounded-full ${statusDot}"></div></div>
+                        ${image.status === 'flagged' ? '<div class="absolute top-2 right-2"><i data-lucide="flag" class="w-3.5 h-3.5 text-red-500"></i></div>' : ''}
+                        <div class="absolute inset-0 bg-brand-700/0 group-hover:bg-brand-700/10 transition-colors flex items-center justify-center"><div class="opacity-0 group-hover:opacity-100 transition-opacity"><div class="bg-white/90 backdrop-blur rounded-lg px-3 py-1.5 text-xs font-medium text-brand-700">Preview</div></div></div>
                     </div>
                     <div class="p-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-medium text-slate-700 truncate">${img.filename}</span>
-                            ${colorDot}
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-slate-700 truncate">${image.filename}</span>
+                            ${color ? `<div class="w-2.5 h-2.5 rounded-full shrink-0 ${borderClass}" style="background:${color}"></div>` : ''}
                         </div>
-                        <div class="flex items-center justify-between mt-0.5">
-                            <span class="text-[10px] text-slate-400">cam ${img.camera_index}</span>
+                        <div class="flex items-center justify-between mt-0.5 gap-2">
+                            <span class="text-[10px] text-slate-400 truncate">${image.track_id}</span>
                             <span class="text-[10px] text-slate-400">${typeLabel}</span>
                         </div>
+                        <div class="mt-1 text-[10px] text-slate-500 truncate" title="${makeModel || ''}">${makeModel || '-'}</div>
+                        <div class="mt-1 text-[10px] text-amber-600 truncate">AI: ${aiType}</div>
                     </div>
                 </div>
             `;
@@ -223,31 +318,62 @@
         lucide.createIcons();
     }
 
-    // ============================================================
-    // PREVIEW MODAL
-    // ============================================================
-
-    let currentPreviewIdx = 0;
-
-    function openPreview(idx) {
-        currentPreviewIdx = idx;
-        const img = MOCK_IMAGES[idx];
-        document.getElementById('previewTitle').textContent = img.filename;
-        document.getElementById('previewMeta').textContent = `cam ${img.camera_index} · seg ${img.segment_id}`;
-        document.getElementById('previewImage').src = img.thumbnail.replace('200x150', '800x600');
-        document.getElementById('previewLabelBtn').href = `label.html?id=${img.id}`;
-
-        const labelsEl = document.getElementById('previewLabels');
-        if (img.vehicle_type) {
-            labelsEl.innerHTML = `
-                <span class="text-xs px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-medium">${img.vehicle_type}</span>
-                ${img.dominant_color ? `<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:${COLORS_DISPLAY[img.dominant_color]}"></span>${img.dominant_color}</span>` : ''}
-                ${img.confidence ? `<span class="text-xs text-slate-400">${(img.confidence * 100).toFixed(0)}% conf</span>` : ''}
-            `;
-        } else {
-            labelsEl.innerHTML = '<span class="text-xs text-slate-400">No labels yet</span>';
+    function renderPagination() {
+        const totalPages = Math.max(1, state.totalPages);
+        state.page = Math.min(state.page, totalPages);
+        const start = state.total ? ((state.page - 1) * state.perPage) + 1 : 0;
+        const end = Math.min(state.page * state.perPage, state.total);
+        document.getElementById('paginationInfo').textContent = `Showing ${formatNumber(start)}-${formatNumber(end)} of ${formatNumber(state.total)}`;
+        const container = document.getElementById('pagination');
+        const buttons = [];
+        buttons.push(`<button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 ${state.page === 1 ? 'text-slate-400 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-50'}" ${state.page === 1 ? 'disabled' : `onclick="goToPage(${state.page - 1})"`}>Prev</button>`);
+        for (let page = 1; page <= totalPages; page += 1) {
+            if (page <= 3 || page > totalPages - 2 || Math.abs(page - state.page) <= 1) {
+                buttons.push(`<button class="px-3 py-1.5 text-sm rounded-lg ${page === state.page ? 'bg-brand-700 text-white font-medium' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}" onclick="goToPage(${page})">${page}</button>`);
+            } else if (buttons[buttons.length - 1] !== '<span class="px-2 text-slate-400">...</span>') {
+                buttons.push('<span class="px-2 text-slate-400">...</span>');
+            }
         }
+        buttons.push(`<button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 ${state.page === totalPages ? 'text-slate-400 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-50'}" ${state.page === totalPages ? 'disabled' : `onclick="goToPage(${state.page + 1})"`}>Next</button>`);
+        container.innerHTML = buttons.join('');
+    }
 
+    function goToPage(page) {
+        state.page = page;
+        loadImages().catch(error => {
+            document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+        });
+    }
+
+    function renderLabels(review) {
+        if (!review) return '<span class="text-xs text-slate-400">No labels yet</span>';
+        const parts = [];
+        if (review.vehicle_type) parts.push(`<span class="text-xs px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-medium">${review.vehicle_type}</span>`);
+        if (review.dominant_color) {
+            const color = CONFIG.COLOR_MAP[review.dominant_color.toLowerCase()] || '#D4D4D8';
+            parts.push(`<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:${color}"></span>${review.dominant_color}</span>`);
+        }
+        if (review.vehicle_make || review.vehicle_model) parts.push(`<span class="text-xs text-slate-400">${[review.vehicle_make, review.vehicle_model].filter(Boolean).join(' / ')}</span>`);
+        if (review.flagged) parts.push('<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-medium">flagged</span>');
+        return parts.join('') || '<span class="text-xs text-slate-400">No labels yet</span>';
+    }
+
+    function openPreviewByTrack(trackId) {
+        const index = state.images.findIndex(image => image.track_id === trackId);
+        if (index === -1) return;
+        state.previewIndex = index;
+        openPreview(index);
+    }
+
+    function openPreview(index) {
+        state.previewIndex = index;
+        const image = state.images[index];
+        if (!image) return;
+        document.getElementById('previewTitle').textContent = image.filename;
+        document.getElementById('previewMeta').textContent = image.track_id;
+        document.getElementById('previewImage').src = image.image_url;
+        document.getElementById('previewLabelBtn').href = `label.html?batch=${encodeURIComponent(batchId)}&track_id=${encodeURIComponent(image.track_id)}`;
+        document.getElementById('previewLabels').innerHTML = renderLabels(image.review);
         document.getElementById('previewModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -257,29 +383,122 @@
         document.body.style.overflow = '';
     }
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', event => {
         const modal = document.getElementById('previewModal');
         if (modal.classList.contains('hidden')) return;
-
-        if (e.key === 'Escape') closePreview();
-        if (e.key === 'ArrowRight' && currentPreviewIdx < MOCK_IMAGES.length - 1) openPreview(currentPreviewIdx + 1);
-        if (e.key === 'ArrowLeft' && currentPreviewIdx > 0) openPreview(currentPreviewIdx - 1);
+        if (event.key === 'Escape') closePreview();
+        if (event.key === 'ArrowRight' && state.previewIndex < state.images.length - 1) openPreview(state.previewIndex + 1);
+        if (event.key === 'ArrowLeft' && state.previewIndex > 0) openPreview(state.previewIndex - 1);
     });
 
-    // ============================================================
-    // FILTER CHIPS
-    // ============================================================
     document.querySelectorAll('.filter-chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            chip.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            // Win: implement actual filtering
+            state.filter = chip.dataset.filter;
+            state.page = 1;
+            updateFilterUi();
+            loadImages().catch(error => {
+                document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+            });
         });
     });
 
-    // Init
-    renderGrid();
-    lucide.createIcons();
+    document.querySelectorAll('.type-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            state.type = chip.dataset.type;
+            state.page = 1;
+            updateFilterUi();
+            loadImages().catch(error => {
+                document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+            });
+        });
+    });
+
+    document.querySelectorAll('.ai-type-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            state.aiType = chip.dataset.aiType;
+            state.page = 1;
+            updateFilterUi();
+            loadImages().catch(error => {
+                document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+            });
+        });
+    });
+
+    document.getElementById('perPageSelect').addEventListener('change', event => {
+        state.perPage = Math.max(1, Math.min(200, Number(event.target.value || CONFIG.IMAGES_PER_PAGE)));
+        state.page = 1;
+        updateFilterUi();
+        loadImages().catch(error => {
+            document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+        });
+    });
+
+    let searchTimer = null;
+    document.getElementById('searchInput').addEventListener('input', event => {
+        state.search = event.target.value || '';
+        state.page = 1;
+        updateFilterUi();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            loadImages().catch(error => {
+                document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+            });
+        }, 180);
+    });
+
+    async function loadImages() {
+        updateUrl();
+        const query = new URLSearchParams({
+            action: 'list-images',
+            batch: batchId,
+            page: String(state.page),
+            per_page: String(state.perPage),
+        });
+        if (state.filter !== 'all') query.set('status', state.filter);
+        if (state.type !== 'all') query.set('type', state.type);
+        if (state.aiType !== 'all') query.set('ai_type', state.aiType);
+        if (state.search.trim() !== '') query.set('search', state.search.trim());
+
+        if (labelerState.value) query.set('labeler', labelerState.value);
+        const response = await fetch(`${CONFIG.API_BASE}?${query.toString()}`, { cache: 'no-store' });
+        const payload = await response.json();
+        if (!payload.ok) throw new Error(payload.error || 'Unable to load images');
+        state.images = payload.images || [];
+        state.total = payload.total || state.images.length;
+        state.totalPages = payload.total_pages || 1;
+        state.page = payload.page || 1;
+        state.perPage = payload.per_page || state.perPage;
+        document.getElementById('batchTitle').textContent = batchId;
+        document.getElementById('batchInfo').textContent = `${formatNumber(state.total)} images in review queue`;
+        const labelQuery = new URLSearchParams({ batch: batchId, page: String(state.page), per_page: String(state.perPage) });
+        if (state.filter !== 'all') labelQuery.set('status', state.filter);
+        if (state.type !== 'all') labelQuery.set('type', state.type);
+        if (state.aiType !== 'all') labelQuery.set('ai_type', state.aiType);
+        if (state.search.trim() !== '') labelQuery.set('search', state.search.trim());
+        document.getElementById('startLabelingBtn').href = `label.html?${labelQuery.toString()}`;
+        updateFilterUi();
+        renderCounts();
+        renderGrid();
+        renderPagination();
+    }
+
+    document.getElementById('labelerSwitcher').addEventListener('click', () => showLabelerModal(true));
+    document.getElementById('labelerCancel').addEventListener('click', hideLabelerModal);
+    document.getElementById('labelerConfirm').addEventListener('click', () => {
+        const selected = document.getElementById('labelerSelect').value;
+        if (!selected) {
+            document.getElementById('labelerSelect').focus();
+            return;
+        }
+        setLabeler(selected);
+    });
+
+    ensureLabeler().then(() => loadImages()).catch(error => {
+        document.getElementById('imageGrid').innerHTML = `<div class="col-span-full bg-white border border-red-200 rounded-xl p-6 text-sm text-red-600">${error.message}</div>`;
+        document.getElementById('batchInfo').textContent = 'Unable to load images';
+    }).finally(() => {
+        lucide.createIcons();
+    });
     </script>
 </body>
 </html>

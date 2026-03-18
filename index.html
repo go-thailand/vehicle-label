@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Label System — Dashboard</title>
+    <title>Vehicle Label System - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>
@@ -30,8 +30,6 @@
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-
-    <!-- Navbar -->
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14">
@@ -40,204 +38,305 @@
                         <i data-lucide="scan-line" class="w-5 h-5 text-white"></i>
                     </div>
                     <span class="text-lg font-semibold text-slate-900">Vehicle Label System</span>
-                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">v1.0</span>
+                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">live</span>
                 </div>
                 <div class="flex items-center gap-4">
                     <a href="index.html" class="text-sm font-medium text-brand-700 border-b-2 border-brand-700 pb-0.5">Dashboard</a>
-                    <a href="list.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">Browse</a>
-                    <a href="label.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 cursor-pointer transition-colors">Label</a>
+                    <a href="list.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Browse</a>
+                    <a href="label.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Label</a>
+                    <div class="w-px h-5 bg-slate-200"></div>
+                    <button id="labelerSwitcher" type="button" class="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                        <i data-lucide="user-round" class="w-4 h-4"></i>
+                        <span id="labelerDisplay">labeler: -</span>
+                    </button>
                     <div class="w-px h-5 bg-slate-200"></div>
                     <div class="flex items-center gap-2 text-sm text-slate-600">
-                        <i data-lucide="user" class="w-4 h-4"></i>
-                        <span id="currentUser">—</span>
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        <span id="storageMode">loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-        <!-- Stats Row -->
+        <div class="flex flex-wrap items-center justify-end gap-2 mb-4">
+            <a id="exportLabelsBtn" href="#" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-brand-300 hover:text-brand-700 transition-colors">
+                <i data-lucide="file-down" class="w-4 h-4"></i>Export Labels CSV
+            </a>
+            <a id="exportStatsCsvBtn" href="#" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-brand-300 hover:text-brand-700 transition-colors">
+                <i data-lucide="sheet" class="w-4 h-4"></i>Export Stats CSV
+            </a>
+            <a id="exportStatsJsonBtn" href="#" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-brand-300 hover:text-brand-700 transition-colors">
+                <i data-lucide="braces" class="w-4 h-4"></i>Open Stats JSON
+            </a>
+        </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="stat-card bg-white rounded-xl border border-slate-200 p-4 cursor-default">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Images</span>
-                    <div class="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center">
-                        <i data-lucide="image" class="w-4 h-4 text-brand-600"></i>
-                    </div>
+                    <div class="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-brand-600"></i></div>
                 </div>
-                <div class="text-2xl font-bold text-slate-900" id="statTotal">12,848</div>
-                <div class="text-xs text-slate-400 mt-1">from 5 cameras</div>
+                <div class="text-2xl font-bold text-slate-900" id="statTotal">-</div>
+                <div class="text-xs text-slate-400 mt-1" id="statTotalMeta">loading batches...</div>
             </div>
-
             <div class="stat-card bg-white rounded-xl border border-slate-200 p-4 cursor-default">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Labeled</span>
-                    <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
-                    </div>
+                    <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i></div>
                 </div>
-                <div class="text-2xl font-bold text-emerald-600" id="statLabeled">0</div>
-                <div class="text-xs text-slate-400 mt-1">0% complete</div>
+                <div class="text-2xl font-bold text-emerald-600" id="statLabeled">-</div>
+                <div class="text-xs text-slate-400 mt-1" id="statLabeledMeta">-</div>
             </div>
-
             <div class="stat-card bg-white rounded-xl border border-slate-200 p-4 cursor-default">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Remaining</span>
-                    <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-                        <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
-                    </div>
+                    <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4 text-amber-600"></i></div>
                 </div>
-                <div class="text-2xl font-bold text-amber-600" id="statRemaining">12,848</div>
-                <div class="text-xs text-slate-400 mt-1">est. ~42h at 5s/image</div>
+                <div class="text-2xl font-bold text-amber-600" id="statRemaining">-</div>
+                <div class="text-xs text-slate-400 mt-1" id="statRemainingMeta">-</div>
             </div>
-
             <div class="stat-card bg-white rounded-xl border border-slate-200 p-4 cursor-default">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Flagged</span>
-                    <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
-                        <i data-lucide="flag" class="w-4 h-4 text-red-500"></i>
-                    </div>
+                    <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center"><i data-lucide="flag" class="w-4 h-4 text-red-500"></i></div>
                 </div>
-                <div class="text-2xl font-bold text-red-500" id="statFlagged">0</div>
+                <div class="text-2xl font-bold text-red-500" id="statFlagged">-</div>
                 <div class="text-xs text-slate-400 mt-1">needs review</div>
             </div>
         </div>
 
-        <!-- Two columns: Batches + Distribution -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- Batch List (2/3) -->
             <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200">
                 <div class="flex items-center justify-between p-4 border-b border-slate-100">
-                    <h2 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                        <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
-                        Batches
-                    </h2>
-                    <span class="text-xs text-slate-400" id="batchCount">26 batches</span>
+                    <h2 class="text-sm font-semibold text-slate-900 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>Batches</h2>
+                    <span class="text-xs text-slate-400" id="batchCount">-</span>
                 </div>
-                <div class="divide-y divide-slate-50" id="batchList">
-                    <!-- Batch rows rendered by JS -->
-                </div>
+                <div class="divide-y divide-slate-50" id="batchList"></div>
             </div>
 
-            <!-- Label Distribution (1/3) -->
             <div class="space-y-4">
-                <!-- Type Distribution -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                        <i data-lucide="car" class="w-4 h-4 text-brand-600"></i>
-                        Type Distribution
-                    </h3>
-                    <div class="space-y-2" id="typeDistribution">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="car" class="w-4 h-4 text-brand-600"></i>Type Distribution</h3>
+                    <div class="space-y-2" id="typeDistribution"></div>
                 </div>
-
-                <!-- Color Distribution -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                        <i data-lucide="palette" class="w-4 h-4 text-brand-600"></i>
-                        Color Distribution
-                    </h3>
-                    <div class="space-y-2" id="colorDistribution">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="palette" class="w-4 h-4 text-brand-600"></i>Color Distribution</h3>
+                    <div class="space-y-2" id="colorDistribution"></div>
                 </div>
-
-                <!-- Top Labelers -->
                 <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                        <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
-                        Top Labelers (Today)
-                    </h3>
-                    <div class="space-y-3" id="leaderboard">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="badge-check" class="w-4 h-4 text-brand-600"></i>Quality Distribution</h3>
+                    <div class="space-y-2" id="qualityDistribution"></div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="badge-info" class="w-4 h-4 text-brand-600"></i>Make Distribution</h3>
+                    <div class="space-y-2" id="makeDistribution"></div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4 text-brand-600"></i>Model Distribution</h3>
+                    <div class="space-y-2" id="modelDistribution"></div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2"><i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>Top Labelers</h3>
+                    <div class="space-y-3" id="leaderboard"></div>
                 </div>
             </div>
         </div>
-
     </main>
 
+    <div id="labelerModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5 text-brand-700"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">เลือกผู้ label</h2>
+                        <p class="text-sm text-slate-500">ระบบจะจำชื่อไว้ในเครื่องนี้ และใช้กับทุกหน้า</p>
+                    </div>
+                </div>
+                <div class="mt-5">
+                    <label for="labelerSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Labeler</label>
+                    <select id="labelerSelect" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">Select a labeler</option>
+                        <option value="Best">Best</option>
+                        <option value="S">S</option>
+                        <option value="Jame">Jame</option>
+                        <option value="Opal">Opal</option>
+                    </select>
+                </div>
+                <div class="mt-5 flex items-center justify-end gap-3">
+                    <button id="labelerCancel" type="button" class="hidden px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
+                    <button id="labelerConfirm" type="button" class="px-4 py-2 rounded-xl bg-brand-700 text-white text-sm font-medium hover:bg-brand-800 transition-colors">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-    // ============================================================
-    // CONFIG — Win: เปลี่ยน API endpoints ตรงนี้
-    // ============================================================
     const CONFIG = {
-        API_BASE: '/vehicle-label/api',           // Backend API base
-        S3_BASE: 'https://vehicle-reid-dataset.s3.ap-southeast-1.amazonaws.com',
-        BATCH_SIZE: 500,                            // images per batch
-        TOTAL_IMAGES: 12848,
+        API_BASE: '/vehicle-label/public/vehicle-label/api/index.php',
+        STORAGE_KEY: 'vls_labeler_name',
+        LABELERS: ['Best', 'S', 'Jame', 'Opal'],
+        COLOR_MAP: {
+            white: '#F8FAFC', black: '#1E293B', silver: '#94A3B8', red: '#EF4444', blue: '#3B82F6', green: '#22C55E',
+            yellow: '#EAB308', orange: '#F97316', brown: '#92400E', other: '#D4D4D8'
+        }
     };
 
-    // ============================================================
-    // MOCK DATA — Win: replace with API calls
-    // ============================================================
-    const MOCK_BATCHES = Array.from({ length: 26 }, (_, i) => ({
-        id: `batch-${String(i + 1).padStart(3, '0')}`,
-        name: `Batch ${i + 1}`,
-        total: i < 25 ? 500 : 348,
-        labeled: i < 2 ? Math.floor(Math.random() * 500) : 0,
-        flagged: i < 2 ? Math.floor(Math.random() * 10) : 0,
-        camera: [602, 603, 622, 623, 542][i % 5],
-    }));
+    const labelerState = {
+        value: localStorage.getItem(CONFIG.STORAGE_KEY) || '',
+        allowCancel: false
+    };
+    let labelerResolver = null;
 
-    const MOCK_TYPE_DIST = [
-        { label: 'Pickup', count: 4200, color: '#3B82F6' },
-        { label: 'Car (Sedan)', count: 3100, color: '#2563EB' },
-        { label: 'Motorcycle', count: 2800, color: '#1D4ED8' },
-        { label: 'Truck', count: 1500, color: '#1E40AF' },
-        { label: 'Van', count: 900, color: '#6366F1' },
-        { label: 'Bus', count: 348, color: '#8B5CF6' },
-    ];
+    function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(value || 0);
+    }
 
-    const MOCK_COLOR_DIST = [
-        { label: 'White', count: 4500, hex: '#F8FAFC', border: true },
-        { label: 'Black', count: 2100, hex: '#1E293B' },
-        { label: 'Silver', count: 1800, hex: '#94A3B8' },
-        { label: 'Blue', count: 1600, hex: '#3B82F6' },
-        { label: 'Red', count: 1200, hex: '#EF4444' },
-        { label: 'Green', count: 800, hex: '#22C55E' },
-        { label: 'Other', count: 848, hex: '#D4D4D8' },
-    ];
+    function setLabeler(labeler) {
+        labelerState.value = labeler;
+        localStorage.setItem(CONFIG.STORAGE_KEY, labeler);
+        document.getElementById('labelerDisplay').textContent = `labeler: ${labeler}`;
+        hideLabelerModal();
+        if (labelerResolver) {
+            labelerResolver(labeler);
+            labelerResolver = null;
+        }
+    }
 
-    const MOCK_LABELERS = [
-        { name: 'Best', count: 342 },
-        { name: 'S', count: 287 },
-        { name: 'Jame', count: 215 },
-    ];
+    function showLabelerModal(allowCancel = false) {
+        labelerState.allowCancel = allowCancel && Boolean(labelerState.value);
+        document.getElementById('labelerSelect').value = labelerState.value || '';
+        document.getElementById('labelerCancel').classList.toggle('hidden', !labelerState.allowCancel);
+        document.getElementById('labelerModal').classList.remove('hidden');
+    }
 
-    // ============================================================
-    // RENDER
-    // ============================================================
+    function hideLabelerModal() {
+        document.getElementById('labelerModal').classList.add('hidden');
+    }
 
-    function renderBatches() {
+    function ensureLabeler() {
+        if (labelerState.value) {
+            document.getElementById('labelerDisplay').textContent = `labeler: ${labelerState.value}`;
+            return Promise.resolve(labelerState.value);
+        }
+
+        showLabelerModal(false);
+        return new Promise(resolve => {
+            labelerResolver = resolve;
+        });
+    }
+
+    function updateExportLinks() {
+        const base = CONFIG.API_BASE;
+        const suffix = labelerState.value ? '&labeler=' + encodeURIComponent(labelerState.value) : '';
+        document.getElementById('exportLabelsBtn').href = `${base}?action=export-labels${suffix}`;
+        document.getElementById('exportStatsCsvBtn').href = `${base}?action=export-stats&format=csv${suffix}`;
+        document.getElementById('exportStatsJsonBtn').href = `${base}?action=export-stats${suffix}`;
+    }
+    function renderDistribution(containerId, data, colorFallback = '#3B82F6') {
+        const container = document.getElementById(containerId);
+        if (!data.length) {
+            container.innerHTML = '<div class="text-xs text-slate-400">No labels yet</div>';
+            return;
+        }
+
+        const max = Math.max(...data.map(item => item.count), 1);
+        container.innerHTML = data.map(item => {
+            const color = CONFIG.COLOR_MAP[(item.label || '').toLowerCase()] || colorFallback;
+            const pct = Math.round((item.count / max) * 100);
+            const needsBorder = color.toLowerCase() === '#f8fafc';
+            return `
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full shrink-0 ${needsBorder ? 'border border-slate-200' : ''}" style="background:${color}"></div>
+                    <span class="text-xs text-slate-600 w-28 truncate" title="${item.label}">${item.label}</span>
+                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pct}%;background:${color}"></div></div>
+                    <span class="text-xs text-slate-500 tabular-nums w-10 text-right">${formatNumber(item.count)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderTextDistribution(containerId, data) {
+        const container = document.getElementById(containerId);
+        if (!data.length) {
+            container.innerHTML = '<div class="text-xs text-slate-400">No labels yet</div>';
+            return;
+        }
+
+        const max = Math.max(...data.map(item => item.count), 1);
+        container.innerHTML = data.map(item => {
+            const pct = Math.round((item.count / max) * 100);
+            return `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-600 w-32 truncate" title="${item.label}">${item.label}</span>
+                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full bg-brand-500" style="width:${pct}%"></div></div>
+                    <span class="text-xs text-slate-500 tabular-nums w-10 text-right">${formatNumber(item.count)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderLeaderboardSections(title, entries) {
+        if (!entries.length) {
+            return `
+                <div>
+                    <div class="text-[11px] uppercase tracking-wide text-slate-400 mb-2">${title}</div>
+                    <div class="text-xs text-slate-400">No label activity yet</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div>
+                <div class="text-[11px] uppercase tracking-wide text-slate-400 mb-2">${title}</div>
+                <div class="space-y-2">${entries.map((entry, index) => `
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm w-5 text-center">${index + 1}</span>
+                        <span class="text-sm font-medium text-slate-700 flex-1">${entry.labeled_by}</span>
+                        <span class="text-sm font-semibold text-brand-700 tabular-nums">${formatNumber(entry.total)}</span>
+                        <span class="text-xs text-slate-400">images</span>
+                    </div>
+                `).join('')}</div>
+            </div>
+        `;
+    }
+
+    function renderLeaderboard(leaderboard) {
+        const container = document.getElementById('leaderboard');
+        const today = leaderboard?.today || [];
+        const allTime = leaderboard?.all_time || [];
+        container.innerHTML = [
+            renderLeaderboardSections('Today', today),
+            renderLeaderboardSections('All Time', allTime)
+        ].join('<div class="border-t border-slate-100 my-3"></div>');
+    }
+
+    function renderBatches(batches) {
         const container = document.getElementById('batchList');
-        container.innerHTML = MOCK_BATCHES.map(b => {
-            const pct = b.total > 0 ? Math.round((b.labeled / b.total) * 100) : 0;
+        document.getElementById('batchCount').textContent = `${formatNumber(batches.length)} batches`;
+        container.innerHTML = batches.map(batch => {
+            const pct = batch.object_count > 0 ? Math.round((batch.labeled_count / batch.object_count) * 100) : 0;
             const statusColor = pct === 100 ? 'bg-emerald-500' : pct > 0 ? 'bg-amber-400' : 'bg-slate-200';
             const statusText = pct === 100 ? 'Done' : pct > 0 ? 'In Progress' : 'Not Started';
             const statusTextColor = pct === 100 ? 'text-emerald-700 bg-emerald-50' : pct > 0 ? 'text-amber-700 bg-amber-50' : 'text-slate-500 bg-slate-100';
-
             return `
-                <a href="list.html?batch=${b.id}" class="batch-row flex items-center gap-4 px-4 py-3 cursor-pointer">
+                <a href="list.html?batch=${encodeURIComponent(batch.id)}" class="batch-row flex items-center gap-4 px-4 py-3">
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-sm font-medium text-slate-900">${b.name}</span>
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="text-sm font-medium text-slate-900">${batch.id}</span>
                             <span class="text-xs px-1.5 py-0.5 rounded ${statusTextColor} font-medium">${statusText}</span>
-                            <span class="text-xs text-slate-400">cam ${b.camera}</span>
+                            <span class="text-xs text-slate-400">${formatNumber(batch.object_count)} images</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full ${statusColor} rounded-full transition-all" style="width:${pct}%"></div>
-                            </div>
-                            <span class="text-xs text-slate-500 tabular-nums w-16 text-right">${b.labeled}/${b.total}</span>
+                            <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${statusColor} rounded-full transition-all" style="width:${pct}%"></div></div>
+                            <span class="text-xs text-slate-500 tabular-nums w-16 text-right">${formatNumber(batch.labeled_count)}/${formatNumber(batch.object_count)}</span>
                         </div>
                     </div>
-                    ${b.flagged > 0 ? `<span class="text-xs text-red-500 flex items-center gap-1"><i data-lucide="flag" class="w-3 h-3"></i>${b.flagged}</span>` : ''}
+                    ${batch.flagged_count > 0 ? `<span class="text-xs text-red-500 flex items-center gap-1"><i data-lucide="flag" class="w-3 h-3"></i>${formatNumber(batch.flagged_count)}</span>` : ''}
                     <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
                 </a>
             `;
@@ -245,46 +344,75 @@
         lucide.createIcons();
     }
 
-    function renderDistribution(containerId, data, maxVal) {
-        const max = maxVal || Math.max(...data.map(d => d.count));
-        const container = document.getElementById(containerId);
-        container.innerHTML = data.map(d => {
-            const pct = Math.round((d.count / max) * 100);
-            const borderClass = d.border ? 'border border-slate-200' : '';
-            return `
-                <div class="flex items-center gap-2">
-                    ${d.hex ? `<div class="w-3 h-3 rounded-full shrink-0 ${borderClass}" style="background:${d.hex}"></div>` : ''}
-                    <span class="text-xs text-slate-600 w-20 truncate">${d.label}</span>
-                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div class="h-full rounded-full" style="width:${pct}%;background:${d.color || d.hex || '#3B82F6'}"></div>
-                    </div>
-                    <span class="text-xs text-slate-500 tabular-nums w-10 text-right">${d.count.toLocaleString()}</span>
-                </div>
-            `;
-        }).join('');
+    async function fetchJson(url) {
+        const nextUrl = new URL(url, window.location.origin);
+        if (labelerState.value) {
+            nextUrl.searchParams.set('labeler', labelerState.value);
+        }
+        const response = await fetch(nextUrl.toString(), { cache: 'no-store' });
+        const payload = await response.json();
+        if (!payload.ok) throw new Error(payload.error || 'Unable to load dashboard data');
+        return payload;
     }
 
-    function renderLeaderboard() {
-        const container = document.getElementById('leaderboard');
-        container.innerHTML = MOCK_LABELERS.map((l, i) => {
-            const medals = ['🥇', '🥈', '🥉'];
-            return `
-                <div class="flex items-center gap-3">
-                    <span class="text-sm w-5 text-center">${medals[i] || (i+1)}</span>
-                    <span class="text-sm font-medium text-slate-700 flex-1">${l.name}</span>
-                    <span class="text-sm font-semibold text-brand-700 tabular-nums">${l.count}</span>
-                    <span class="text-xs text-slate-400">images</span>
-                </div>
-            `;
-        }).join('');
+    async function loadDashboard() {
+        const [summaryPayload, distributionPayload, leaderboardPayload, batchesPayload] = await Promise.all([
+            fetchJson(`${CONFIG.API_BASE}?action=stats&type=summary`),
+            fetchJson(`${CONFIG.API_BASE}?action=stats&type=distribution`),
+            fetchJson(`${CONFIG.API_BASE}?action=stats&type=leaderboard`),
+            fetchJson(`${CONFIG.API_BASE}?action=list-batches`)
+        ]);
+
+        const summary = summaryPayload.stats || {};
+        const distribution = distributionPayload.stats || {};
+        const leaderboard = leaderboardPayload.stats || {};
+        const batches = batchesPayload.batches || [];
+
+        document.getElementById('storageMode').textContent = summary.storage || 'database';
+        document.getElementById('statTotal').textContent = formatNumber(summary.total_images);
+        document.getElementById('statTotalMeta').textContent = `${formatNumber(batches.length)} batches from S3`;
+        document.getElementById('statLabeled').textContent = formatNumber(summary.labeled_count ?? summary.labeled);
+        document.getElementById('statLabeledMeta').textContent = `${summary.percentage_complete || 0}% complete`;
+        document.getElementById('statRemaining').textContent = formatNumber(summary.remaining_count ?? summary.remaining);
+        document.getElementById('statRemainingMeta').textContent = `${summary.estimated_time_remaining_hours || 0} team-hours at ${summary.avg_seconds_per_image || 5} sec/image`;
+        document.getElementById('statFlagged').textContent = formatNumber(summary.flagged_count ?? summary.flagged);
+
+        renderBatches(batches);
+        renderDistribution('typeDistribution', distribution.type_distribution || []);
+        renderDistribution('colorDistribution', distribution.color_distribution || []);
+        renderTextDistribution('qualityDistribution', distribution.quality_distribution || []);
+        renderTextDistribution('makeDistribution', distribution.make_distribution || []);
+        renderTextDistribution('modelDistribution', distribution.model_distribution || []);
+        renderLeaderboard(leaderboard);
     }
 
-    // Init
-    renderBatches();
-    renderDistribution('typeDistribution', MOCK_TYPE_DIST);
-    renderDistribution('colorDistribution', MOCK_COLOR_DIST);
-    renderLeaderboard();
-    lucide.createIcons();
+    document.getElementById('labelerSwitcher').addEventListener('click', () => showLabelerModal(true));
+    document.getElementById('labelerCancel').addEventListener('click', hideLabelerModal);
+    document.getElementById('labelerConfirm').addEventListener('click', () => {
+        const selected = document.getElementById('labelerSelect').value;
+        if (!selected) {
+            document.getElementById('labelerSelect').focus();
+            return;
+        }
+        setLabeler(selected);
+    });
+
+    ensureLabeler().then(() => {
+        updateExportLinks();
+        return loadDashboard();
+    }).catch(error => {
+        document.getElementById('batchList').innerHTML = `<div class="p-4 text-sm text-red-600">${error.message}</div>`;
+        document.getElementById('typeDistribution').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+        document.getElementById('colorDistribution').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+        document.getElementById('qualityDistribution').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+        document.getElementById('makeDistribution').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+        document.getElementById('modelDistribution').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+        document.getElementById('leaderboard').innerHTML = '<div class="text-xs text-slate-400">Unable to load</div>';
+    }).finally(() => {
+        lucide.createIcons();
+    });
     </script>
 </body>
 </html>
+
+
