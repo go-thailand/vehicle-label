@@ -75,6 +75,13 @@
             </div>
 
             <div class="p-4 space-y-5 flex-1">
+                <!-- Small image warning -->
+                <div id="smallImageWarning" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-3">
+                    <div class="flex items-center gap-2 text-xs text-orange-700 font-medium">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+                        <span id="smallImageText">Small image — type/color only, make/model may be unreliable</span>
+                    </div>
+                </div>
                 <div class="bg-slate-100 rounded-xl border border-slate-200 p-3">
                     <div class="flex items-center justify-between gap-3 mb-2">
                         <span class="text-xs font-semibold text-slate-700 uppercase tracking-wide">Review Status</span>
@@ -278,6 +285,19 @@
 
         badge.textContent = status;
         badge.className = `text-[10px] px-2 py-1 rounded-full border font-medium ${badgeStyles[status] || badgeStyles.unlabeled}`;
+
+        // Show small image warning based on bbox dimensions (before status returns)
+        const w = review?.bbox_width ?? 999;
+        const h = review?.bbox_height ?? 999;
+        const area = w * h;
+        const warningEl = document.getElementById('smallImageWarning');
+        const warningText = document.getElementById('smallImageText');
+        if (area < 20000) {
+            warningEl.classList.remove('hidden');
+            warningText.textContent = `Small image (${w}×${h}px) — type/color only, make/model may be unreliable`;
+        } else {
+            warningEl.classList.add('hidden');
+        }
 
         if (status === 'flagged') {
             hint.textContent = `Flagged${review?.labeled_by ? ` by ${review.labeled_by}` : ''}. Update labels if needed, then save to keep the flag.`;

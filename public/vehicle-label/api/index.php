@@ -79,7 +79,7 @@ function getLabelLookup(array $config, array $filenames = []): array
     foreach (array_chunk($filenames, 500) as $chunk) {
         $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
         $stmt = $pdo->prepare(sprintf(
-            'SELECT filename, segment_id, camera_index, batch_id, vehicle_type, dominant_color, vehicle_make, vehicle_model, quality, flagged, labeled_by, labeled_at, ai_vehicle_type, ai_color, ai_make, ai_confidence, updated_at
+            'SELECT filename, segment_id, camera_index, batch_id, vehicle_type, dominant_color, vehicle_make, vehicle_model, quality, flagged, labeled_by, labeled_at, ai_vehicle_type, ai_color, ai_make, ai_confidence, bbox_width, bbox_height, updated_at
              FROM %s
              WHERE filename IN (%s)',
             $table,
@@ -138,7 +138,9 @@ function getBatchStats(array $config): array
                 SUM(CASE WHEN flagged = 1 THEN 1 ELSE 0 END) AS flagged_count,
                 ROUND(AVG(ai_confidence), 4) AS avg_confidence,
                 SUM(CASE WHEN ai_confidence >= 0.8 THEN 1 ELSE 0 END) AS high_conf_count,
-                SUM(CASE WHEN ai_confidence < 0.3 THEN 1 ELSE 0 END) AS low_conf_count
+                SUM(CASE WHEN ai_confidence < 0.3 THEN 1 ELSE 0 END) AS low_conf_count,
+                ROUND(AVG(COALESCE(bbox_width,0) * COALESCE(bbox_height,0)), 0) AS avg_bbox_area,
+                SUM(CASE WHEN COALESCE(bbox_width,0) * COALESCE(bbox_height,0) < 5000 THEN 1 ELSE 0 END) AS tiny_count
          FROM %s
          GROUP BY batch_id',
         $table

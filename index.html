@@ -356,6 +356,7 @@
                             <span class="text-xs px-1.5 py-0.5 rounded ${statusTextColor} font-medium">${statusText}</span>
                             <span class="text-xs text-slate-400">${formatNumber(batch.object_count)} images</span>
                             <span class="text-[10px] px-1.5 py-0.5 rounded ${badge.color} font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full ${badge.dot}"></span>${confPct}% AI · ${highPct}% clear</span>
+                            ${batch.tiny_count > 0 ? `<span class="text-[10px] px-1.5 py-0.5 rounded text-orange-700 bg-orange-50 font-medium">${formatNumber(batch.tiny_count)} tiny</span>` : ''}
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${statusColor} rounded-full transition-all" style="width:${pct}%"></div></div>
