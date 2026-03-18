@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 return [
     'db' => [
-        'dsn' => envValue('NT_TAG_ID_DB_DSN', 'mysql:host=gothdb-staging.czeug8m2orgn.ap-southeast-1.rds.amazonaws.com;port=3306;dbname=nt_tag_id_db;charset=utf8mb4'),
-        'username' => envValue('NT_TAG_ID_DB_USER', 'pm_kwang'),
+        'dsn' => envValue('NT_TAG_ID_DB_DSN', 'mysql:host=YOUR_DB_HOST;port=3306;dbname=nt_tag_id_db;charset=utf8mb4'),
+        'username' => envValue('NT_TAG_ID_DB_USER', 'YOUR_DB_USER'),
         'password' => envValue('NT_TAG_ID_DB_PASS', ''),
         'options' => [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -13,8 +13,8 @@ return [
         ],
     ],
     's3' => [
-        'bucket' => envValue('VEHICLE_LABEL_S3_BUCKET', 'vehicle-reid-dataset'),
-        'region' => envValue('VEHICLE_LABEL_S3_REGION', 'ap-southeast-7'),
+        'bucket' => envValue('VEHICLE_LABEL_S3_BUCKET', 'YOUR_S3_BUCKET'),
+        'region' => envValue('VEHICLE_LABEL_S3_REGION', 'YOUR_S3_REGION'),
         'access_key' => envValue('VEHICLE_LABEL_S3_ACCESS_KEY', ''),
         'secret_key' => envValue('VEHICLE_LABEL_S3_SECRET_KEY', ''),
         'base_prefix' => envValue('VEHICLE_LABEL_S3_BASE_PREFIX', 'unlabeled/'),
