@@ -65,25 +65,38 @@ function normalizedReviewRow(array $row): array
     return $row;
 }
 
-function getLabelLookup(array $config): array
+function getLabelLookup(array $config, array $filenames = []): array
 {
+    if ($filenames === []) {
+        return [];
+    }
+
     $pdo = getPDO($config);
     $table = labelTable($config);
-    $rows = $pdo->query(sprintf(
-        'SELECT filename, segment_id, camera_index, batch_id, vehicle_type, dominant_color, vehicle_make, vehicle_model, quality, flagged, labeled_by, labeled_at, ai_vehicle_type, ai_color, ai_make, ai_confidence, updated_at
-         FROM %s',
-        $table
-    ))->fetchAll();
-
     $lookup = [];
-    foreach ($rows as $row) {
-        $row = normalizedReviewRow($row);
-        $filename = (string) $row['filename'];
-        $trackId = trackIdFromFilename($filename);
-        $row['track_id'] = $trackId;
-        $row['batch_prefix'] = batchPrefix((string) $row['batch_id']);
-        $row['image_key'] = $row['batch_prefix'] . $filename;
-        $lookup[$filename] = $row;
+    $filenames = array_values(array_unique(array_filter(array_map('strval', $filenames))));
+
+    foreach (array_chunk($filenames, 500) as $chunk) {
+        $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
+        $stmt = $pdo->prepare(sprintf(
+            'SELECT filename, segment_id, camera_index, batch_id, vehicle_type, dominant_color, vehicle_make, vehicle_model, quality, flagged, labeled_by, labeled_at, ai_vehicle_type, ai_color, ai_make, ai_confidence, updated_at
+             FROM %s
+             WHERE filename IN (%s)',
+            $table,
+            $placeholders
+        ));
+        $stmt->execute($chunk);
+        $rows = $stmt->fetchAll();
+
+        foreach ($rows as $row) {
+            $row = normalizedReviewRow($row);
+            $filename = (string) $row['filename'];
+            $trackId = trackIdFromFilename($filename);
+            $row['track_id'] = $trackId;
+            $row['batch_prefix'] = batchPrefix((string) $row['batch_id']);
+            $row['image_key'] = $row['batch_prefix'] . $filename;
+            $lookup[$filename] = $row;
+        }
     }
 
     return $lookup;
@@ -150,53 +163,58 @@ function attachBatchStats(array $catalog, array $stats): array
     }, $catalog);
 }
 
-function getManifestLookup(array $config): array
+function getManifestLookup(array $config, array $filenames = []): array
 {
-    $ttl = (int) ($config['runtime']['cache_ttl'] ?? 300);
-    $manifestKey = (string) (($config['s3']['manifest_key'] ?? 'manifest.csv'));
+    if ($filenames === []) {
+        return [];
+    }
 
-    return cacheRemember($config, 'manifest-index', $ttl, static function () use ($config, $manifestKey): array {
-        $csv = getS3($config)->getObject($manifestKey);
-        $lines = preg_split('/\r\n|\n|\r/', trim($csv));
-        if (!is_array($lines) || $lines === []) {
-            return [];
+    $manifestKey = (string) ($config['s3']['manifest_key'] ?? 'manifest.csv');
+    $targets = array_fill_keys(array_values(array_unique(array_filter(array_map('strval', $filenames)))), true);
+    $lookup = [];
+
+    $csv = getS3($config)->getObject($manifestKey);
+    $stream = fopen('php://temp', 'r+');
+    if ($stream === false) {
+        throw new RuntimeException('Unable to open manifest stream.');
+    }
+
+    fwrite($stream, $csv);
+    rewind($stream);
+
+    $header = fgetcsv($stream);
+    if (!is_array($header)) {
+        fclose($stream);
+        return [];
+    }
+
+    while (($row = fgetcsv($stream)) !== false) {
+        $assoc = [];
+        foreach ($header as $index => $column) {
+            $assoc[(string) $column] = $row[$index] ?? null;
         }
 
-        $header = null;
-        $lookup = [];
-        foreach ($lines as $line) {
-            if ($line === '') {
-                continue;
-            }
-
-            $row = str_getcsv($line);
-            if ($header === null) {
-                $header = $row;
-                continue;
-            }
-
-            $assoc = [];
-            foreach ($header as $index => $column) {
-                $assoc[(string) $column] = $row[$index] ?? null;
-            }
-
-            $filename = trim((string) ($assoc['filename'] ?? ''));
-            if ($filename === '') {
-                continue;
-            }
-
-            $lookup[$filename] = [
-                'segment_id' => isset($assoc['segment_id']) && $assoc['segment_id'] !== '' ? (int) $assoc['segment_id'] : null,
-                'camera_index' => isset($assoc['camera_index']) && $assoc['camera_index'] !== '' ? (int) $assoc['camera_index'] : null,
-                'ai_vehicle_type' => normalizeTokenLabel($assoc['vehicle_type'] ?? null),
-                'ai_color' => normalizeTokenLabel($assoc['dominant_color'] ?? null),
-                'ai_make' => normalizeTitleLabel($assoc['vehicle_make'] ?? null),
-                'ai_confidence' => $assoc['vehicle_type_confidence'] ?? null,
-            ];
+        $filename = trim((string) ($assoc['filename'] ?? ''));
+        if ($filename === '' || !isset($targets[$filename])) {
+            continue;
         }
 
-        return $lookup;
-    });
+        $lookup[$filename] = [
+            'segment_id' => isset($assoc['segment_id']) && $assoc['segment_id'] !== '' ? (int) $assoc['segment_id'] : null,
+            'camera_index' => isset($assoc['camera_index']) && $assoc['camera_index'] !== '' ? (int) $assoc['camera_index'] : null,
+            'ai_vehicle_type' => normalizeTokenLabel($assoc['vehicle_type'] ?? null),
+            'ai_color' => normalizeTokenLabel($assoc['dominant_color'] ?? null),
+            'ai_make' => normalizeTitleLabel($assoc['vehicle_make'] ?? null),
+            'ai_confidence' => $assoc['vehicle_type_confidence'] ?? null,
+        ];
+
+        if (count($lookup) === count($targets)) {
+            break;
+        }
+    }
+
+    fclose($stream);
+    return $lookup;
 }
 
 function normalizeImage(array $s3Row, array $reviewLookup, array $manifestLookup, array $config): array
@@ -631,11 +649,13 @@ try {
             $aiType = normalizeTokenLabel((string) requestValue('ai_type', ''));
             $search = normalizeWhitespace((string) requestValue('search', ''));
             $prefix = batchPrefix($batchId);
-            $reviewLookup = getLabelLookup($config);
-            $manifestLookup = getManifestLookup($config);
+            $s3Images = getS3($config)->listImages($prefix, 5000);
+            $filenames = array_map(static fn (array $row): string => filenameFromKey((string) ($row['Key'] ?? '')), $s3Images);
+            $reviewLookup = getLabelLookup($config, $filenames);
+            $manifestLookup = getManifestLookup($config, $filenames);
             $allImages = array_map(
                 static fn (array $row): array => normalizeImage($row, $reviewLookup, $manifestLookup, $config),
-                getS3($config)->listImages($prefix, 5000)
+                $s3Images
             );
             $filteredImages = applyImageFilters($allImages, $status, $type, $aiType, $search);
             $pagination = paginateItems($filteredImages, $page, $perPage);
