@@ -135,7 +135,10 @@ function getBatchStats(array $config): array
     $rows = $pdo->query(sprintf(
         'SELECT batch_id,
                 SUM(CASE WHEN labeled_by IS NOT NULL AND labeled_by <> "" THEN 1 ELSE 0 END) AS labeled_count,
-                SUM(CASE WHEN flagged = 1 THEN 1 ELSE 0 END) AS flagged_count
+                SUM(CASE WHEN flagged = 1 THEN 1 ELSE 0 END) AS flagged_count,
+                ROUND(AVG(ai_confidence), 4) AS avg_confidence,
+                SUM(CASE WHEN ai_confidence >= 0.8 THEN 1 ELSE 0 END) AS high_conf_count,
+                SUM(CASE WHEN ai_confidence < 0.3 THEN 1 ELSE 0 END) AS low_conf_count
          FROM %s
          GROUP BY batch_id',
         $table
@@ -146,6 +149,9 @@ function getBatchStats(array $config): array
         $stats[(string) $row['batch_id']] = [
             'labeled_count' => (int) ($row['labeled_count'] ?? 0),
             'flagged_count' => (int) ($row['flagged_count'] ?? 0),
+            'avg_confidence' => (float) ($row['avg_confidence'] ?? 0),
+            'high_conf_count' => (int) ($row['high_conf_count'] ?? 0),
+            'low_conf_count' => (int) ($row['low_conf_count'] ?? 0),
         ];
     }
 

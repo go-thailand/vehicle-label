@@ -322,14 +322,32 @@
 
     const batchPagination = { page: 0, totalPages: 0, total: 0, loading: false };
 
+    // #4 Smart batch ordering — sort by avg_confidence DESC (high quality first)
+    function sortBatchesByQuality(batches) {
+        return [...batches].sort((a, b) => (b.avg_confidence || 0) - (a.avg_confidence || 0));
+    }
+
+    function confidenceBadge(conf) {
+        if (conf >= 0.8) return { text: 'High', color: 'text-emerald-700 bg-emerald-50', dot: 'bg-emerald-400' };
+        if (conf >= 0.5) return { text: 'Med', color: 'text-amber-700 bg-amber-50', dot: 'bg-amber-400' };
+        if (conf >= 0.3) return { text: 'Low', color: 'text-orange-700 bg-orange-50', dot: 'bg-orange-400' };
+        return { text: 'Poor', color: 'text-red-700 bg-red-50', dot: 'bg-red-400' };
+    }
+
     function renderBatches(batches, append = false) {
         const container = document.getElementById('batchList');
         document.getElementById('batchCount').textContent = `${formatNumber(batchPagination.total)} batches`;
-        const html = batches.map(batch => {
+        const sorted = sortBatchesByQuality(batches);
+        const html = sorted.map(batch => {
             const pct = batch.object_count > 0 ? Math.round((batch.labeled_count / batch.object_count) * 100) : 0;
             const statusColor = pct === 100 ? 'bg-emerald-500' : pct > 0 ? 'bg-amber-400' : 'bg-slate-200';
             const statusText = pct === 100 ? 'Done' : pct > 0 ? 'In Progress' : 'Not Started';
             const statusTextColor = pct === 100 ? 'text-emerald-700 bg-emerald-50' : pct > 0 ? 'text-amber-700 bg-amber-50' : 'text-slate-500 bg-slate-100';
+            // #3 Quality badge based on avg_confidence
+            const conf = batch.avg_confidence || 0;
+            const badge = confidenceBadge(conf);
+            const confPct = Math.round(conf * 100);
+            const highPct = batch.object_count > 0 ? Math.round((batch.high_conf_count || 0) / batch.object_count * 100) : 0;
             return `
                 <a href="list.html?batch=${encodeURIComponent(batch.id)}" class="batch-row flex items-center gap-4 px-4 py-3">
                     <div class="flex-1 min-w-0">
@@ -337,6 +355,7 @@
                             <span class="text-sm font-medium text-slate-900">${batch.id}</span>
                             <span class="text-xs px-1.5 py-0.5 rounded ${statusTextColor} font-medium">${statusText}</span>
                             <span class="text-xs text-slate-400">${formatNumber(batch.object_count)} images</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded ${badge.color} font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full ${badge.dot}"></span>${confPct}% AI · ${highPct}% clear</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${statusColor} rounded-full transition-all" style="width:${pct}%"></div></div>

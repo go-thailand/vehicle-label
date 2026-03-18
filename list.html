@@ -298,6 +298,7 @@
                         <img src="${image.image_url}" alt="${image.filename}" class="w-full h-full object-cover" loading="lazy">
                         <div class="absolute top-2 left-2 flex items-center gap-1"><div class="w-2 h-2 rounded-full ${statusDot}"></div></div>
                         ${image.status === 'flagged' ? '<div class="absolute top-2 right-2"><i data-lucide="flag" class="w-3.5 h-3.5 text-red-500"></i></div>' : ''}
+                        ${(() => { const c = review.ai_confidence ?? 0; const bg = c >= 0.8 ? 'bg-emerald-500' : c >= 0.5 ? 'bg-amber-500' : 'bg-red-500'; return `<div class="absolute bottom-1 right-1 ${bg} text-white text-[9px] font-bold px-1 rounded">${Math.round(c*100)}%</div>`; })()}
                         <div class="absolute inset-0 bg-brand-700/0 group-hover:bg-brand-700/10 transition-colors flex items-center justify-center"><div class="opacity-0 group-hover:opacity-100 transition-opacity"><div class="bg-white/90 backdrop-blur rounded-lg px-3 py-1.5 text-xs font-medium text-brand-700">Preview</div></div></div>
                     </div>
                     <div class="p-2">
@@ -463,7 +464,12 @@
         const response = await fetch(`${CONFIG.API_BASE}?${query.toString()}`, { cache: 'no-store' });
         const payload = await response.json();
         if (!payload.ok) throw new Error(payload.error || 'Unable to load images');
-        state.images = payload.images || [];
+        let images = payload.images || [];
+        // #2 Auto-hide very low confidence (<0.3)
+        images = images.filter(img => (img.review?.ai_confidence ?? 1) >= 0.3);
+        // #1 Sort by confidence DESC — clear images first
+        images.sort((a, b) => (b.review?.ai_confidence ?? 0) - (a.review?.ai_confidence ?? 0));
+        state.images = images;
         state.total = payload.total || state.images.length;
         state.totalPages = payload.total_pages || 1;
         state.page = payload.page || 1;
