@@ -182,13 +182,13 @@ function getManifestLookup(array $config, array $filenames = []): array
     fwrite($stream, $csv);
     rewind($stream);
 
-    $header = fgetcsv($stream);
+    $header = fgetcsv($stream, 0, ",", "\"", "");
     if (!is_array($header)) {
         fclose($stream);
         return [];
     }
 
-    while (($row = fgetcsv($stream)) !== false) {
+    while (($row = fgetcsv($stream, 0, ",", "\"", "")) !== false) {
         $assoc = [];
         foreach ($header as $index => $column) {
             $assoc[(string) $column] = $row[$index] ?? null;
