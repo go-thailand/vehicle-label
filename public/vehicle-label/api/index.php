@@ -635,9 +635,17 @@ if ($action === '') {
 try {
     switch ($action) {
         case 'list-batches':
+            $page = max(1, (int) requestValue('page', 1));
+            $perPage = max(1, min(100, (int) requestValue('per_page', 50)));
+            $allBatches = attachBatchStats(getBatchCatalog($config), getBatchStats($config));
+            $pagination = paginateItems($allBatches, $page, $perPage);
             jsonResponse([
                 'ok' => true,
-                'batches' => attachBatchStats(getBatchCatalog($config), getBatchStats($config)),
+                'batches' => $pagination['items'],
+                'page' => $pagination['meta']['page'],
+                'per_page' => $pagination['meta']['per_page'],
+                'total' => $pagination['meta']['total'],
+                'total_pages' => $pagination['meta']['total_pages'],
             ]);
 
         case 'list-images':
